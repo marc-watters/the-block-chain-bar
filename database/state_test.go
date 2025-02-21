@@ -25,15 +25,10 @@ var (
 
 func TestNewStateFromDisk(t *testing.T) {
 	t.Run("assert accounts and balances from new state", func(t *testing.T) {
-		gd := []byte(`{"balances": {"A": 1, "B": 0}}`)
-		if err := appFs.WriteFile(genF, gd, os.ModeAppend); err != nil {
-			t.Fatalf("error writing to %q: %v", genF, err)
-		}
-
-		txd := []byte(`{"from": "A", "to": "B", "value": 1}`)
-		if err := appFs.WriteFile(txF, txd, os.ModeAppend); err != nil {
-			t.Fatalf("error writing to %q: %v", txF, err)
-		}
+		composeStateFiles(t,
+			/* genesis     */ []byte(`{"balances": {"A": 1, "B": 0}}`),
+			/* transaction */ []byte(`{"from": "A", "to": "B", "value": 1}`),
+		)
 
 		s, err := database.NewStateFromDisk()
 		if err != nil {
@@ -60,16 +55,10 @@ func TestNewStateFromDisk(t *testing.T) {
 	})
 
 	t.Run("assert error insufficent balance", func(t *testing.T) {
-		gd := []byte(`{"balances": {"A": 1, "B": 0}}`)
-		if err := appFs.WriteFile(genF, gd, os.ModeAppend); err != nil {
-			t.Fatalf("error writing to %q: %v", genF, err)
-		}
-
-		txd := []byte(`{"from": "A", "to": "B", "value": 2}`)
-		if err := appFs.WriteFile(txF, txd, os.ModeAppend); err != nil {
-			t.Fatalf("error writing to %q: %v", txF, err)
-		}
-
+		composeStateFiles(t,
+			/* genesis     */ []byte(`{"balances": {"A": 1, "B": 0}}`),
+			/* transaction */ []byte(`{"from": "A", "to": "B", "value": 2}`),
+		)
 		_, err := database.NewStateFromDisk()
 		if err == nil {
 			t.Errorf("assert insufficient balance failed, expected an error")
@@ -80,4 +69,16 @@ func TestNewStateFromDisk(t *testing.T) {
 			t.Errorf("assert insufficient balance failed, unexpected error: %v", err)
 		}
 	})
+}
+
+func composeStateFiles(t testing.TB, genData, txData []byte) {
+	t.Helper()
+
+	if err := appFs.WriteFile(genF, genData, os.ModeAppend); err != nil {
+		t.Fatalf("error writing to genesis file: %v", err)
+	}
+
+	if err := appFs.WriteFile(txF, txData, os.ModeAppend); err != nil {
+		t.Fatalf("error writing to transaction file: %v", err)
+	}
 }

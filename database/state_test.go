@@ -32,23 +32,11 @@ func TestNewStateFromDisk(t *testing.T) {
 		t.Fatalf("error loading state: %v", err)
 	}
 
-	a, ok := s.Balances["A"]
-	if !ok {
-		t.Errorf("assert state account failed: could not find account 'A'")
-	}
+	a := database.NewAccount("A")
+	b := database.NewAccount("B")
 
-	b, ok := s.Balances["B"]
-	if !ok {
-		t.Errorf("assert state account failed: could not find account 'B'")
-	}
-
-	if a != 0 {
-		t.Errorf("assert state balance failed: wrong balance for account 'A': %d", a)
-	}
-
-	if b != 1 {
-		t.Errorf("assert state balance failed: wrong balance for account 'B': %d", a)
-	}
+	assertAccount(t, s, a, 0)
+	assertAccount(t, s, b, 1)
 }
 
 func composeStateFiles(t testing.TB, genData, txData []byte) {
@@ -60,5 +48,18 @@ func composeStateFiles(t testing.TB, genData, txData []byte) {
 
 	if err := appFs.WriteFile(txF, txData, 0600); err != nil {
 		t.Fatalf("error writing to transaction file: %v", err)
+	}
+}
+
+func assertAccount(t testing.TB, s *database.State, a database.Account, bal uint) {
+	t.Helper()
+
+	val, ok := s.Balances[a]
+	if !ok {
+		t.Errorf("assert account failed: could not find account %q", a)
+	}
+
+	if val != bal {
+		t.Errorf("assert balance failed: wrong balance for %q: got %d, want %d", a, val, bal)
 	}
 }

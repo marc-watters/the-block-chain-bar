@@ -62,18 +62,26 @@ func NewStateFromDisk() (*State, error) {
 			return nil, fmt.Errorf("unmarshall transaction: %v", err)
 		}
 
-		if tx.IsReward() {
-			s.Balances[tx.To] += tx.Value
-			continue
+		if err := s.apply(tx); err != nil {
+			return nil, err
 		}
-
-		if s.Balances[tx.From] < tx.Value {
-			return nil, fmt.Errorf("insufficient balance")
-		}
-
-		s.Balances[tx.From] -= tx.Value
-		s.Balances[tx.To] += tx.Value
 	}
 
 	return s, nil
+}
+
+func (s *State) apply(tx Tx) error {
+	if tx.IsReward() {
+		s.Balances[tx.To] += tx.Value
+		return nil
+	}
+
+	if s.Balances[tx.From] < tx.Value {
+		return fmt.Errorf("insuffcient balance")
+	}
+
+	s.Balances[tx.From] -= tx.Value
+	s.Balances[tx.To] += tx.Value
+
+	return nil
 }

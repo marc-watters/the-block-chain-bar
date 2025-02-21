@@ -26,7 +26,7 @@ const (
 
 func NewStateFromDisk() (*State, error) {
 	// load genesis file
-	gf, err := AppFs.ReadFile(filepath.Join(Dir, GenF))
+	g, err := loadGenesis(filepath.Join(Dir, GenF))
 	if err != nil {
 		return nil, err
 	}
@@ -35,14 +35,6 @@ func NewStateFromDisk() (*State, error) {
 	txf, err := AppFs.Open(filepath.Join(Dir, TxF))
 	if err != nil {
 		return nil, err
-	}
-
-	// unmarsall genesis data into struct
-	var g struct {
-		Balances map[Account]uint `json:"balances"`
-	}
-	if err := json.Unmarshal(gf, &g); err != nil {
-		return nil, fmt.Errorf("unmarshall genesis: %v", err)
 	}
 
 	// create state object

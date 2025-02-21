@@ -22,15 +22,10 @@ var (
 )
 
 func TestNewStateFromDisk(t *testing.T) {
-	gd := []byte(`{"balances": {"A": 1, "B": 0}}`)
-	if err := appFs.WriteFile(genF, gd, 0600); err != nil {
-		t.Fatalf("error writing to %q: %v", genF, err)
-	}
-
-	txd := []byte(`{"from": "A", "to": "B", "value": 1}`)
-	if err := appFs.WriteFile(txF, txd, 0600); err != nil {
-		t.Fatalf("error writing to %q: %v", txF, err)
-	}
+	composeStateFiles(t,
+		/* genesis     */ []byte(`{"balances": {"A": 1, "B": 0}}`),
+		/* transaction */ []byte(`{"from": "A", "to": "B", "value": 1}`),
+	)
 
 	s, err := database.NewStateFromDisk()
 	if err != nil {
@@ -53,5 +48,17 @@ func TestNewStateFromDisk(t *testing.T) {
 
 	if b != 1 {
 		t.Errorf("assert state balance failed: wrong balance for account 'B': %d", a)
+	}
+}
+
+func composeStateFiles(t testing.TB, genData, txData []byte) {
+	t.Helper()
+
+	if err := appFs.WriteFile(genF, genData, 0600); err != nil {
+		t.Fatalf("error writing to genesis file: %v", err)
+	}
+
+	if err := appFs.WriteFile(txF, txData, 0600); err != nil {
+		t.Fatalf("error writing to transaction file: %v", err)
 	}
 }

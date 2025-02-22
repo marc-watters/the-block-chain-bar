@@ -22,21 +22,44 @@ var (
 )
 
 func TestNewStateFromDisk(t *testing.T) {
-	composeStateFiles(t,
-		/* genesis     */ []byte(`{"balances": {"A": 1, "B": 0}}`),
-		/* transaction */ []byte(`{"from": "A", "to": "B", "value": 1}`),
-	)
+	t.Run("assert new state from disk", func(t *testing.T) {
+		composeStateFiles(t,
+			/* genesis     */ []byte(`{"balances": {"A": 1, "B": 0}}`),
+			/* transaction */ []byte(`{"from": "A", "to": "B", "value": 1}`),
+		)
 
-	s, err := database.NewStateFromDisk()
-	if err != nil {
-		t.Fatalf("error loading state: %v", err)
-	}
+		s, err := database.NewStateFromDisk()
+		if err != nil {
+			t.Fatalf("error loading state: %v", err)
+		}
+		a := database.NewAccount("A")
+		b := database.NewAccount("B")
 
-	a := database.NewAccount("A")
-	b := database.NewAccount("B")
+		assertAccount(t, s, a, 0)
+		assertAccount(t, s, b, 1)
+	})
 
-	assertAccount(t, s, a, 0)
-	assertAccount(t, s, b, 1)
+	t.Run("assert state add transaction", func(t *testing.T) {
+		composeStateFiles(t,
+			/* genesis     */ []byte(`{"balances": {"A": 1, "B": 0}}`),
+			/* transaction */ []byte(``),
+		)
+
+		s, err := database.NewStateFromDisk()
+		if err != nil {
+			t.Fatalf("error loading state: %v", err)
+		}
+
+		a := database.NewAccount("A")
+		b := database.NewAccount("B")
+
+		if err := s.Add(database.Tx{From: a, To: b, Value: 1}); err != nil {
+			t.Fatalf("error adding transaction: %v", err)
+		}
+
+		assertAccount(t, s, a, 0)
+		assertAccount(t, s, b, 1)
+	})
 }
 
 func composeStateFiles(t testing.TB, genData, txData []byte) {

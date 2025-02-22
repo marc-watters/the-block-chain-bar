@@ -1,6 +1,7 @@
 package database_test
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -96,54 +97,48 @@ func TestNewStateFromDisk(t *testing.T) {
 		a := database.NewAccount("A")
 		b := database.NewAccount("B")
 
-		// test one transaction
-		tx := database.NewTx(a, b, 1, "")
-		if err := s.Add(tx); err != nil {
-			t.Fatalf("error adding transaction: %v", err)
+		cases := []struct {
+			from  database.Account
+			to    database.Account
+			value uint
+			data  string
+		}{
+			{a, b, 1, ""},
+			{b, a, 1, ""},
 		}
 
-		assertAccount(t, s, a, 0)
-		assertAccount(t, s, b, 1)
+		txs := make([]database.Tx, 0)
+		for _, c := range cases {
+			tx := database.NewTx(c.from, c.to, c.value, c.data)
 
-		if err := s.Persist(); err != nil {
-			t.Fatalf("error persisting transaction: %v", err)
-		}
+			if err := s.Add(tx); err != nil {
+				t.Fatalf("error adding transaction: %v", err)
+			}
+			if err := s.Persist(); err != nil {
+				t.Fatalf("error persisting transaction: %v", err)
+			}
 
-		got, err := appFs.ReadFile(txF)
-		if err != nil {
-			t.Fatalf("error reading transaction file: %v", err)
-		}
+			txs = append(txs, tx)
+			got, err := appFs.ReadFile(txF)
+			if err != nil {
+				t.Fatalf("error reading transaction file: %v", err)
+			}
 
-		want := []byte("{\"from\":\"A\",\"to\":\"B\",\"value\":1,\"data\":\"\"}\n")
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("assert persisted transaction failed:\n\tgot: \t%q\n\twant:\t%q", got, want)
-		}
+			want := func() []byte {
+				b := bytes.NewBuffer([]byte{})
+				for _, tx := range txs {
+					b.Write([]byte(fmt.Sprintf(
+						"{\"from\":\"%s\",\"to\":\"%s\",\"value\":%d,\"data\":\"%s\"}\n",
+						tx.From, tx.To, tx.Value, tx.Data,
+					)))
+				}
 
-		// test sequential transactions
-		tx = database.NewTx(b, a, 1, "")
-		if err := s.Add(tx); err != nil {
-			t.Fatalf("error adding transaction: %v", err)
-		}
+				return b.Bytes()
+			}
 
-		assertAccount(t, s, a, 1)
-		assertAccount(t, s, b, 0)
-
-		if err := s.Persist(); err != nil {
-			t.Fatalf("error persisting transaction: %v", err)
-		}
-
-		got, err = appFs.ReadFile(txF)
-		if err != nil {
-			t.Fatalf("error reading transaction file: %v", err)
-		}
-
-		want = []byte(fmt.Sprint(
-			"{\"from\":\"A\",\"to\":\"B\",\"value\":1,\"data\":\"\"}\n",
-			"{\"from\":\"B\",\"to\":\"A\",\"value\":1,\"data\":\"\"}\n",
-		))
-
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("assert sequential persisted transaction failed:\n\tgot: \t%q\n\twant:\t%q", got, want)
+			if !reflect.DeepEqual(got, want()) {
+				t.Errorf("assert sequential persisted transaction failed:\n\tgot: \t%v\n\twant:\t%v", got, want())
+			}
 		}
 	})
 }

@@ -85,6 +85,24 @@ func (s *State) Add(tx Tx) error {
 	return nil
 }
 
+func (s *State) Persist() error {
+	for len(s.txMempool) > 0 {
+		var tx Tx
+		tx, s.txMempool = s.txMempool[0], s.txMempool[1:]
+
+		txJson, err := json.Marshal(tx)
+		if err != nil {
+			return err
+		}
+
+		if _, err = s.db.Write(append(txJson, '\n')); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *State) apply(tx Tx) error {
 	if tx.IsReward() {
 		s.Balances[tx.To] += tx.Value

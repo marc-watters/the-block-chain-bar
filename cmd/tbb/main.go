@@ -3,9 +3,15 @@ package main
 import (
 	"fmt"
 	"os"
+	"tbb/v2/database"
 
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	database.AppFs = &afero.Afero{Fs: afero.NewOsFs()}
+}
 
 func main() {
 	tbbCmd := &cobra.Command{

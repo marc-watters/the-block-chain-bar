@@ -1,6 +1,7 @@
 package database_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"tbb/v2/database"
@@ -74,7 +75,8 @@ func TestNewStateFromDisk(t *testing.T) {
 			t.Errorf("assert insufficient balance failed, expected an error")
 		}
 
-		if err.Error() != "insufficient balance" {
+		var insufficientBalance database.ErrInsufficientBalance
+		if !errors.As(err, &insufficientBalance) {
 			t.Errorf("assert insufficient balance failed, unexpected error: %v", err)
 		}
 	})

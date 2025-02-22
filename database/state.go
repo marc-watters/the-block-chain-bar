@@ -82,7 +82,7 @@ func (s *State) apply(tx Tx) error {
 	}
 
 	if s.Balances[tx.From] < tx.Value {
-		return fmt.Errorf("insuffcient balance")
+		return ErrInsufficientBalance{tx.From, tx.To, tx.Value}
 	}
 
 	s.Balances[tx.From] -= tx.Value

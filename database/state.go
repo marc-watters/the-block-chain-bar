@@ -13,10 +13,13 @@ import (
 
 var AppFs *afero.Afero
 
+type Snapshot [32]byte
+
 type State struct {
 	Balances map[Account]uint
 
 	txMempool []Tx
+	snapshot  Snapshot
 	db        afero.File
 }
 
@@ -43,6 +46,7 @@ func NewStateFromDisk() (*State, error) {
 	s := &State{
 		Balances:  make(map[Account]uint),
 		txMempool: make([]Tx, 0),
+		snapshot:  Snapshot{},
 		db:        txf,
 	}
 

@@ -17,7 +17,10 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {},
 	}
 
-	tbbCmd.AddCommand(versionCmd)
+	tbbCmd.AddCommand(
+		versionCmd,
+		balancesCmd(),
+	)
 
 	err := tbbCmd.Execute()
 	if err != nil {

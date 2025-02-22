@@ -1,7 +1,9 @@
 package database_test
 
 import (
+	"fmt"
 	"path/filepath"
+	"reflect"
 	"tbb/v2/database"
 	"testing"
 
@@ -59,6 +61,71 @@ func TestNewStateFromDisk(t *testing.T) {
 
 		assertAccount(t, s, a, 0)
 		assertAccount(t, s, b, 1)
+	})
+
+	t.Run("assert state persist transactions", func(t *testing.T) {
+		composeStateFiles(t,
+			/* genesis     */ []byte(`{"balances": {"A": 1, "B": 0}}`),
+			/* transaction */ []byte(``),
+		)
+
+		s, err := database.NewStateFromDisk()
+		if err != nil {
+			t.Fatalf("error loading state: %v", err)
+		}
+
+		a := database.NewAccount("A")
+		b := database.NewAccount("B")
+
+		// test one transaction
+		tx := database.NewTx(a, b, 1, "")
+		if err := s.Add(tx); err != nil {
+			t.Fatalf("error adding transaction: %v", err)
+		}
+
+		assertAccount(t, s, a, 0)
+		assertAccount(t, s, b, 1)
+
+		if err := s.Persist(); err != nil {
+			t.Fatalf("error persisting transaction: %v", err)
+		}
+
+		got, err := appFs.ReadFile(txF)
+		if err != nil {
+			t.Fatalf("error reading transaction file: %v", err)
+		}
+
+		want := []byte("{\"from\":\"A\",\"to\":\"B\",\"value\":1,\"data\":\"\"}\n")
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("assert persisted transaction failed:\n\tgot: \t%q\n\twant:\t%q", got, want)
+		}
+
+		// test sequential transactions
+		tx = database.NewTx(b, a, 1, "")
+		if err := s.Add(tx); err != nil {
+			t.Fatalf("error adding transaction: %v", err)
+		}
+
+		assertAccount(t, s, a, 1)
+		assertAccount(t, s, b, 0)
+
+		if err := s.Persist(); err != nil {
+			t.Fatalf("error persisting transaction: %v", err)
+		}
+
+		got, err = appFs.ReadFile(txF)
+		if err != nil {
+			t.Fatalf("error reading transaction file: %v", err)
+		}
+
+		want = []byte(fmt.Sprint(
+			"{\"from\":\"A\",\"to\":\"B\",\"value\":1,\"data\":\"\"}\n",
+			"{\"from\":\"B\",\"to\":\"A\",\"value\":1,\"data\":\"\"}\n",
+		))
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("assert sequential persisted transaction failed:\n\tgot: \t%q\n\twant:\t%q", got, want)
+		}
 	})
 }
 

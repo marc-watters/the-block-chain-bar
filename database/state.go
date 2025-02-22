@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/spf13/afero"
@@ -32,7 +33,7 @@ func NewStateFromDisk() (*State, error) {
 	}
 
 	// load transaction file
-	txf, err := AppFs.Open(filepath.Join(Dir, TxF))
+	txf, err := AppFs.OpenFile(filepath.Join(Dir, TxF), os.O_WRONLY, 0600)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +77,24 @@ func (s *State) Add(tx Tx) error {
 	}
 
 	s.txMempool = append(s.txMempool, tx)
+
+	return nil
+}
+
+func (s *State) Persist() error {
+	for len(s.txMempool) > 0 {
+		var tx Tx
+		tx, s.txMempool = s.txMempool[0], s.txMempool[1:]
+
+		txJson, err := json.Marshal(tx)
+		if err != nil {
+			return err
+		}
+
+		if _, err = s.db.Write(append(txJson, '\n')); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

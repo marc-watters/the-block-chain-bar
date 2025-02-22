@@ -119,26 +119,8 @@ func TestNewStateFromDisk(t *testing.T) {
 			}
 
 			txs = append(txs, tx)
-			got, err := appFs.ReadFile(txF)
-			if err != nil {
-				t.Fatalf("error reading transaction file: %v", err)
-			}
 
-			want := func() []byte {
-				b := bytes.NewBuffer([]byte{})
-				for _, tx := range txs {
-					b.Write([]byte(fmt.Sprintf(
-						"{\"from\":\"%s\",\"to\":\"%s\",\"value\":%d,\"data\":\"%s\"}\n",
-						tx.From, tx.To, tx.Value, tx.Data,
-					)))
-				}
-
-				return b.Bytes()
-			}
-
-			if !reflect.DeepEqual(got, want()) {
-				t.Errorf("assert sequential persisted transaction failed:\n\tgot: \t%v\n\twant:\t%v", got, want())
-			}
+			assertPersistedTxs(t, txs)
 		}
 	})
 }
@@ -165,5 +147,25 @@ func assertAccount(t testing.TB, s *database.State, a database.Account, bal uint
 
 	if val != bal {
 		t.Errorf("assert balance failed: wrong balance for %q: got %d, want %d", a, val, bal)
+	}
+}
+
+func assertPersistedTxs(t testing.TB, txs []database.Tx) {
+	got, err := appFs.ReadFile(txF)
+	if err != nil {
+		t.Fatalf("error reading transaction file: %v", err)
+	}
+
+	want := func() []byte {
+		b := bytes.NewBuffer([]byte{})
+		for _, tx := range txs {
+			b.Write([]byte(fmt.Sprint(tx.AsJson(), "\n")))
+		}
+
+		return b.Bytes()
+	}
+
+	if !reflect.DeepEqual(got, want()) {
+		t.Errorf("assert sequential persisted transaction failed:\n\tgot: \t%v\n\twant:\t%v", got, want())
 	}
 }

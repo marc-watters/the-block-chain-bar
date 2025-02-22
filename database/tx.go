@@ -1,5 +1,7 @@
 package database
 
+import "fmt"
+
 type Account string
 
 func NewAccount(value string) Account {
@@ -19,4 +21,8 @@ func NewTx(from Account, to Account, value uint, data string) Tx {
 
 func (t Tx) IsReward() bool {
 	return t.Data == "reward"
+}
+
+func (t Tx) AsJson() string {
+	return fmt.Sprintf(`{"from":"%s","to":"%s","value":%d,"data":"%s"}`, t.From, t.To, t.Value, t.Data)
 }

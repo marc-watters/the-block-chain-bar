@@ -75,7 +75,7 @@ func TestNewStateFromDisk(t *testing.T) {
 		a := database.NewAccount("A")
 		b := database.NewAccount("B")
 
-		if err := s.Add(database.Tx{From: a, To: b, Value: 1}); err != nil {
+		if err := s.AddTx(database.Tx{From: a, To: b, Value: 1}); err != nil {
 			t.Fatalf("error adding transaction: %v", err)
 		}
 
@@ -111,7 +111,7 @@ func TestNewStateFromDisk(t *testing.T) {
 		for _, c := range cases {
 			tx := database.NewTx(c.from, c.to, c.value, c.data)
 
-			if err := s.Add(tx); err != nil {
+			if err := s.AddTx(tx); err != nil {
 				t.Fatalf("error adding transaction: %v", err)
 			}
 			if _, err := s.Persist(); err != nil {

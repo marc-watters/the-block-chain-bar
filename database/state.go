@@ -80,7 +80,7 @@ func NewStateFromDisk() (*State, error) {
 	return s, nil
 }
 
-func (s *State) Add(tx Tx) error {
+func (s *State) AddTx(tx Tx) error {
 	if err := s.apply(tx); err != nil {
 		return err
 	}

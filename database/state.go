@@ -121,6 +121,10 @@ func (s *State) Close() {
 	s.db.Close()
 }
 
+func (s *State) LatestSnapshot() Snapshot {
+	return s.snapshot
+}
+
 func (s *State) apply(tx Tx) error {
 	if tx.IsReward() {
 		s.Balances[tx.To] += tx.Value

@@ -24,6 +24,11 @@ var (
 	txF  = filepath.Join(dir, database.TxF)
 )
 
+var (
+	a = database.NewAccount("A")
+	b = database.NewAccount("B")
+)
+
 func TestNewStateFromDisk(t *testing.T) {
 	t.Run("assert accounts and balances from new state", func(t *testing.T) {
 		genData := []byte(`{"balances": {"A": 0, "B": 1}}`)
@@ -39,9 +44,6 @@ func TestNewStateFromDisk(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error loading state: %v", err)
 		}
-
-		a := database.NewAccount("A")
-		b := database.NewAccount("B")
 
 		assertAccount(t, s, a, 0)
 		assertAccount(t, s, b, 1)
@@ -61,9 +63,6 @@ func TestNewStateFromDisk(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error loading state: %v", err)
 		}
-
-		a := database.NewAccount("A")
-		b := database.NewAccount("B")
 
 		block := database.NewBlock(
 			database.Hash{},

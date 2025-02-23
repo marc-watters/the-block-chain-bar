@@ -41,21 +41,20 @@ func TestNewStateFromDisk(t *testing.T) {
 		a := database.NewAccount("A")
 		b := database.NewAccount("B")
 
-		aBal, ok := s.Balances[a]
-		if !ok {
-			t.Errorf("assert account failed: could not find account %q", a)
-		}
-
-		if aBal != 0 {
-			t.Errorf("assert balance failed: wrong balance for %q: got %d, want %d", a, aBal, 0)
-		}
-
-		bBal, ok := s.Balances[b]
-		if !ok {
-			t.Errorf("assert account failed: could not find account %q", b)
-		}
-
-		if bBal != 1 {
-			t.Errorf("assert balance failed: wrong balance for %q: got %d, want %d", b, bBal, 1)
-		}
+		assertAccount(t, s, a, 0)
+		assertAccount(t, s, b, 1)
 	})
+}
+
+func assertAccount(t testing.TB, s *database.State, a database.Account, bal uint) {
+	t.Helper()
+
+	val, ok := s.Balances[a]
+	if !ok {
+		t.Errorf("assert account failed: could not find account %q", a)
+	}
+
+	if val != bal {
+		t.Errorf("assert balance failed: wrong balance for %q: got %d, want %d", a, val, bal)
+	}
+}

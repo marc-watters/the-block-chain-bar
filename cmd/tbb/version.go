@@ -8,9 +8,9 @@ import (
 
 const (
 	Major  = "0"
-	Minor  = "2"
+	Minor  = "3"
 	Fix    = "0"
-	Verbal = "Tx Add && Balances List"
+	Verbal = "Immutable Snapshots"
 )
 
 var versionCmd = &cobra.Command{

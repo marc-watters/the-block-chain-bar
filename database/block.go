@@ -39,3 +39,8 @@ type BlockHeader struct {
 	Parent Hash // parent block reference
 	Time   uint64
 }
+
+type BlockFS struct {
+	Key   Hash  `json:"hash"`
+	Value Block `json:"block"`
+}

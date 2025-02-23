@@ -115,16 +115,10 @@ func TestNewStateFromDisk(t *testing.T) {
 		}
 
 		parentBlock := createBlock(t, s, b, a, 1, database.Hash{})
-		parentHash, err := s.Persist()
-		if err != nil {
-			t.Fatalf("error persisting parent block: %v", err)
-		}
+		parentHash := persistBlock(t, s)
 
 		childBlock := createBlock(t, s, a, b, 1, parentHash)
-		childHash, err := s.Persist()
-		if err != nil {
-			t.Fatalf("error persisting child block: %v", err)
-		}
+		childHash := persistBlock(t, s)
 
 		got, err := appFs.ReadFile(txF)
 		if err != nil {
@@ -178,4 +172,15 @@ func createBlock(t testing.TB, s *database.State, from, to database.Account, val
 	}
 
 	return b
+}
+
+func persistBlock(t testing.TB, s *database.State) database.Hash {
+	t.Helper()
+
+	h, err := s.Persist()
+	if err != nil {
+		t.Fatalf("error persisting block: %v", err)
+	}
+
+	return h
 }

@@ -83,21 +83,20 @@ func TestNewStateFromDisk(t *testing.T) {
 	})
 
 	t.Run("assert state add transaction", func(t *testing.T) {
+		// clear any previously recorded transcations
+		if err := appFs.WriteFile(txF, []byte{}, 0600); err != nil {
+			t.Fatalf("error truncating transaction file: %v", err)
+		}
+
 		s, err := database.NewStateFromDisk()
 		if err != nil {
 			t.Fatalf("error loading state: %v", err)
 		}
 
-		block := database.NewBlock(
-			database.Hash{},
-			uint64(time.Now().Unix()),
-			[]database.Tx{
-				database.NewTx(b, a, 1, ""),
-			},
-		)
+		createBlock(t, s, b, a, 1, database.Hash{})
 
-		if err := s.AddBlock(block); err != nil {
-			t.Fatalf("error adding block: %v", err)
+		if _, err := s.Persist(); err != nil {
+			t.Fatalf("error persisting block: %v", err)
 		}
 
 		assertAccount(t, s, a, 1)
@@ -105,44 +104,26 @@ func TestNewStateFromDisk(t *testing.T) {
 	})
 
 	t.Run("assert state persist transactions", func(t *testing.T) {
+		// clear any previously recorded transcations
+		if err := appFs.WriteFile(txF, []byte{}, 0600); err != nil {
+			t.Fatalf("error truncating transaction file: %v", err)
+		}
+
 		s, err := database.NewStateFromDisk()
 		if err != nil {
 			t.Fatalf("error loading state: %v", err)
 		}
 
-		parentBlock := database.NewBlock(
-			database.Hash{},
-			uint64(time.Now().Unix()),
-			[]database.Tx{
-				database.NewTx(b, a, 1, ""),
-			},
-		)
-
-		if err := s.AddBlock(parentBlock); err != nil {
-			t.Fatalf("error adding block: %v", err)
-		}
-
+		parentBlock := createBlock(t, s, b, a, 1, database.Hash{})
 		parentHash, err := s.Persist()
 		if err != nil {
-			t.Fatalf("error persisting block A: %v", err)
+			t.Fatalf("error persisting parent block: %v", err)
 		}
 
-		childBlock := database.NewBlock(
-			parentHash,
-			uint64(time.Now().Unix()),
-			[]database.Tx{
-				database.NewTx(a, b, 1, ""),
-			},
-		)
-
-		err = s.AddBlock(childBlock)
-		if err != nil {
-			t.Fatalf("error adding block B: %v", err)
-		}
-
+		childBlock := createBlock(t, s, a, b, 1, parentHash)
 		childHash, err := s.Persist()
 		if err != nil {
-			t.Fatalf("error persisting blockB: %v", err)
+			t.Fatalf("error persisting child block: %v", err)
 		}
 
 		got, err := appFs.ReadFile(txF)
@@ -163,7 +144,7 @@ func TestNewStateFromDisk(t *testing.T) {
 		want := slices.Concat(append(bfsParent, '\n'), append(bfsChild, '\n'))
 
 		if !reflect.DeepEqual(got, want) {
-			t.Errorf("assert persisted transactions failed:\ngot:\n%d\nwant:\n%d", got, want)
+			t.Errorf("assert persisted transactions failed:\ngot:\n%s\nwant:\n%s", got, want)
 		}
 	})
 }
@@ -179,4 +160,22 @@ func assertAccount(t testing.TB, s *database.State, a database.Account, bal uint
 	if val != bal {
 		t.Errorf("assert balance failed: wrong balance for %q: got %d, want %d", a, val, bal)
 	}
+}
+
+func createBlock(t testing.TB, s *database.State, from, to database.Account, value uint, h database.Hash) database.Block {
+	t.Helper()
+
+	b := database.NewBlock(
+		h,
+		uint64(time.Now().Unix()),
+		[]database.Tx{
+			database.NewTx(from, to, value, ""),
+		},
+	)
+
+	if err := s.AddBlock(b); err != nil {
+		t.Fatalf("error adding block: %v", err)
+	}
+
+	return b
 }

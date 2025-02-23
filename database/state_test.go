@@ -120,26 +120,7 @@ func TestNewStateFromDisk(t *testing.T) {
 		childBlock := createBlock(t, s, a, b, 1, parentHash)
 		childHash := persistBlock(t, s)
 
-		got, err := appFs.ReadFile(txF)
-		if err != nil {
-			t.Fatalf("error reading block.db file: %v", err)
-		}
-
-		bfsParent, err := json.Marshal(database.BlockFS{parentHash, parentBlock})
-		if err != nil {
-			t.Fatalf("error marshaling parent blockFS: %v", err)
-		}
-
-		bfsChild, err := json.Marshal(database.BlockFS{childHash, childBlock})
-		if err != nil {
-			t.Fatalf("error marshaling child blockFS: %v", err)
-		}
-
-		want := slices.Concat(append(bfsParent, '\n'), append(bfsChild, '\n'))
-
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("assert persisted transactions failed:\ngot:\n%s\nwant:\n%s", got, want)
-		}
+		assertPersistedBlocks(t, parentBlock, childBlock, parentHash, childHash)
 	})
 }
 
@@ -183,4 +164,29 @@ func persistBlock(t testing.TB, s *database.State) database.Hash {
 	}
 
 	return h
+}
+
+func assertPersistedBlocks(t testing.TB, pBlock, cBlock database.Block, pHash, cHash database.Hash) {
+	t.Helper()
+
+	got, err := appFs.ReadFile(txF)
+	if err != nil {
+		t.Fatalf("error reading block.db file: %v", err)
+	}
+
+	pbfs, err := json.Marshal(database.BlockFS{pHash, pBlock})
+	if err != nil {
+		t.Fatalf("error marshaling parent blockFS: %v", err)
+	}
+
+	cbfs, err := json.Marshal(database.BlockFS{cHash, cBlock})
+	if err != nil {
+		t.Fatalf("error marshaling child blockFS: %v", err)
+	}
+
+	want := slices.Concat(append(pbfs, '\n'), append(cbfs, '\n'))
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("assert persisted transactions failed:\ngot:\n%s\nwant:\n%s", got, want)
+	}
 }

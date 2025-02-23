@@ -138,6 +138,16 @@ func (s *State) Close() {
 	s.db.Close()
 }
 
+func (s *State) applyBlock(b Block) error {
+	for _, tx := range b.Payload {
+		if err := s.apply(tx); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *State) apply(tx Tx) error {
 	if tx.IsReward() {
 		s.Balances[tx.To] += tx.Value

@@ -2,6 +2,7 @@ package database
 
 import (
 	"bufio"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -76,6 +77,10 @@ func NewStateFromDisk() (*State, error) {
 		}
 	}
 
+	if err := s.doSnapshot(); err != nil {
+		return nil, err
+	}
+
 	return s, nil
 }
 
@@ -89,22 +94,27 @@ func (s *State) Add(tx Tx) error {
 	return nil
 }
 
-func (s *State) Persist() error {
+func (s *State) Persist() (Snapshot, error) {
 	for len(s.txMempool) > 0 {
 		var tx Tx
 		tx, s.txMempool = s.txMempool[0], s.txMempool[1:]
 
 		txJson, err := json.Marshal(tx)
 		if err != nil {
-			return err
+			return Snapshot{}, err
 		}
 
 		if _, err = s.db.Write(append(txJson, '\n')); err != nil {
-			return err
+			return Snapshot{}, err
 		}
+
+		if err := s.doSnapshot(); err != nil {
+			return Snapshot{}, err
+		}
+		fmt.Printf("New DB Snapshot: %x\n", s.snapshot)
 	}
 
-	return nil
+	return s.snapshot, nil
 }
 
 func (s *State) Close() {
@@ -123,6 +133,21 @@ func (s *State) apply(tx Tx) error {
 
 	s.Balances[tx.From] -= tx.Value
 	s.Balances[tx.To] += tx.Value
+
+	return nil
+}
+
+func (s *State) doSnapshot() error {
+	// Re-read the entire file from the first byte
+	if _, err := s.db.Seek(0, 0); err != nil {
+		return err
+	}
+
+	txsData, err := afero.ReadAll(s.db)
+	if err != nil {
+		return err
+	}
+	s.snapshot = sha256.Sum256(txsData)
 
 	return nil
 }

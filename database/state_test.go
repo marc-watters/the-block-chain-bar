@@ -114,7 +114,7 @@ func TestNewStateFromDisk(t *testing.T) {
 			if err := s.Add(tx); err != nil {
 				t.Fatalf("error adding transaction: %v", err)
 			}
-			if err := s.Persist(); err != nil {
+			if _, err := s.Persist(); err != nil {
 				t.Fatalf("error persisting transaction: %v", err)
 			}
 

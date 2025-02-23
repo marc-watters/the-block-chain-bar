@@ -70,7 +70,7 @@ func txAddCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = s.Persist()
+			_, err = s.Persist()
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)

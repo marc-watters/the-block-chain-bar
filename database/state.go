@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/afero"
 )
@@ -24,7 +25,7 @@ type State struct {
 const (
 	Dir  = "database"
 	GenF = "genesis.json"
-	TxF  = "tx.db"
+	TxF  = "block.db"
 )
 
 func NewStateFromDisk() (*State, error) {
@@ -99,6 +100,34 @@ func (s *State) AddBlock(b Block) error {
 
 	return nil
 }
+
+func (s *State) Persist() (Hash, error) {
+	b := NewBlock(s.hash, uint64(time.Now().Unix()), s.txMempool)
+	bh, err := b.Hash()
+	if err != nil {
+		return Hash{}, err
+	}
+
+	bfs := BlockFS{bh, b}
+
+	bfsJson, err := json.Marshal(bfs)
+	if err != nil {
+		return Hash{}, err
+	}
+
+	fmt.Printf("Persisting new Block to disk:\n")
+	fmt.Printf("\t%s\n", bfsJson)
+
+	if _, err := s.db.Write(append(bfsJson, '\n')); err != nil {
+		return Hash{}, err
+	}
+	s.hash = bh
+
+	s.txMempool = []Tx{}
+
+	return s.hash, nil
+}
+
 func (s *State) Close() {
 	s.db.Close()
 }

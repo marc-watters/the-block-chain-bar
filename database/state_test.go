@@ -1,10 +1,13 @@
 package database_test
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
+	"slices"
 	"tbb/v2/database"
 	"testing"
 	"time"
@@ -99,6 +102,69 @@ func TestNewStateFromDisk(t *testing.T) {
 
 		assertAccount(t, s, a, 1)
 		assertAccount(t, s, b, 0)
+	})
+
+	t.Run("assert state persist transactions", func(t *testing.T) {
+		s, err := database.NewStateFromDisk()
+		if err != nil {
+			t.Fatalf("error loading state: %v", err)
+		}
+
+		parentBlock := database.NewBlock(
+			database.Hash{},
+			uint64(time.Now().Unix()),
+			[]database.Tx{
+				database.NewTx(b, a, 1, ""),
+			},
+		)
+
+		if err := s.AddBlock(parentBlock); err != nil {
+			t.Fatalf("error adding block: %v", err)
+		}
+
+		parentHash, err := s.Persist()
+		if err != nil {
+			t.Fatalf("error persisting block A: %v", err)
+		}
+
+		childBlock := database.NewBlock(
+			parentHash,
+			uint64(time.Now().Unix()),
+			[]database.Tx{
+				database.NewTx(a, b, 1, ""),
+			},
+		)
+
+		err = s.AddBlock(childBlock)
+		if err != nil {
+			t.Fatalf("error adding block B: %v", err)
+		}
+
+		childHash, err := s.Persist()
+		if err != nil {
+			t.Fatalf("error persisting blockB: %v", err)
+		}
+
+		got, err := appFs.ReadFile(txF)
+		if err != nil {
+			t.Fatalf("error reading block.db file: %v", err)
+		}
+
+		bfsParent, err := json.Marshal(database.BlockFS{parentHash, parentBlock})
+		if err != nil {
+			t.Fatalf("error marshaling parent blockFS: %v", err)
+		}
+
+		bfsChild, err := json.Marshal(database.BlockFS{childHash, childBlock})
+		if err != nil {
+			t.Fatalf("error marshaling child blockFS: %v", err)
+		}
+
+		want := slices.Concat(append(bfsParent, '\n'), append(bfsChild, '\n'))
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("assert persisted transactions failed:\ngot:\n%d\nwant:\n%d", got, want)
+		}
 	})
 }
 

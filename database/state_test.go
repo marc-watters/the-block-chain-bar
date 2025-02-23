@@ -78,6 +78,28 @@ func TestNewStateFromDisk(t *testing.T) {
 			t.Errorf("assert insufficient balance failed, unexpected error: %T", err)
 		}
 	})
+
+	t.Run("assert state add transaction", func(t *testing.T) {
+		s, err := database.NewStateFromDisk()
+		if err != nil {
+			t.Fatalf("error loading state: %v", err)
+		}
+
+		block := database.NewBlock(
+			database.Hash{},
+			uint64(time.Now().Unix()),
+			[]database.Tx{
+				database.NewTx(b, a, 1, ""),
+			},
+		)
+
+		if err := s.AddBlock(block); err != nil {
+			t.Fatalf("error adding block: %v", err)
+		}
+
+		assertAccount(t, s, a, 1)
+		assertAccount(t, s, b, 0)
+	})
 }
 
 func assertAccount(t testing.TB, s *database.State, a database.Account, bal uint) {

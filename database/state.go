@@ -14,13 +14,11 @@ import (
 
 var AppFs *afero.Afero
 
-type Snapshot [32]byte
-
 type State struct {
 	Balances map[Account]uint
 
 	txMempool []Tx
-	snapshot  Snapshot
+	hash      Hash
 	db        afero.File
 }
 
@@ -47,7 +45,7 @@ func NewStateFromDisk() (*State, error) {
 	s := &State{
 		Balances:  make(map[Account]uint),
 		txMempool: make([]Tx, 0),
-		snapshot:  Snapshot{},
+		hash:      Hash{},
 		db:        txf,
 	}
 
@@ -67,18 +65,17 @@ func NewStateFromDisk() (*State, error) {
 			return nil, fmt.Errorf("tx scan failed: %v", err)
 		}
 
-		var tx Tx
-		if err := json.Unmarshal(scanner.Bytes(), &tx); err != nil {
-			return nil, fmt.Errorf("unmarshall transaction: %v", err)
-		}
-
-		if err := s.apply(tx); err != nil {
+		bfsJson := scanner.Bytes()
+		var bfs BlockFS
+		if err := json.Unmarshal(bfsJson, &bfs); err != nil {
 			return nil, err
 		}
-	}
 
-	if err := s.doSnapshot(); err != nil {
-		return nil, err
+		if err := s.applyBlock(bfs.Value); err != nil {
+			return nil, err
+		}
+
+		s.hash = bfs.Key
 	}
 
 	return s, nil
@@ -94,35 +91,17 @@ func (s *State) Add(tx Tx) error {
 	return nil
 }
 
-func (s *State) Persist() (Snapshot, error) {
-	for len(s.txMempool) > 0 {
-		var tx Tx
-		tx, s.txMempool = s.txMempool[0], s.txMempool[1:]
-
-		txJson, err := json.Marshal(tx)
-		if err != nil {
-			return Snapshot{}, err
 		}
 
-		if _, err = s.db.Write(append(txJson, '\n')); err != nil {
-			return Snapshot{}, err
-		}
 
-		if err := s.doSnapshot(); err != nil {
-			return Snapshot{}, err
-		}
-		fmt.Printf("New DB Snapshot: %x\n", s.snapshot)
 	}
 
-	return s.snapshot, nil
 }
 
 func (s *State) Close() {
 	s.db.Close()
 }
 
-func (s *State) LatestSnapshot() Snapshot {
-	return s.snapshot
 }
 
 func (s *State) apply(tx Tx) error {
@@ -137,21 +116,6 @@ func (s *State) apply(tx Tx) error {
 
 	s.Balances[tx.From] -= tx.Value
 	s.Balances[tx.To] += tx.Value
-
-	return nil
-}
-
-func (s *State) doSnapshot() error {
-	// Re-read the entire file from the first byte
-	if _, err := s.db.Seek(0, 0); err != nil {
-		return err
-	}
-
-	txsData, err := afero.ReadAll(s.db)
-	if err != nil {
-		return err
-	}
-	s.snapshot = sha256.Sum256(txsData)
 
 	return nil
 }

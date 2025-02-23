@@ -128,6 +128,10 @@ func (s *State) Persist() (Hash, error) {
 	return s.hash, nil
 }
 
+func (s *State) LatestHash() Hash {
+	return s.hash
+}
+
 func (s *State) Close() {
 	s.db.Close()
 }

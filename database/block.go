@@ -34,3 +34,8 @@ func (b Block) Hash() (Hash, error) {
 
 	return sha256.Sum256(bj), nil
 }
+
+type BlockHeader struct {
+	Parent Hash // parent block reference
+	Time   uint64
+}

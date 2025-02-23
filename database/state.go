@@ -90,6 +90,10 @@ func (s *State) Add(tx Tx) error {
 	return nil
 }
 
+func (s *State) LatestHash() Hash {
+	return s.latestHash
+}
+
 func (s *State) Close() {
 	s.db.Close()
 }

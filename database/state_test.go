@@ -2,6 +2,7 @@ package database_test
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"tbb/v2/database"
@@ -18,6 +19,19 @@ func init() {
 	appFs = database.AppFs
 }
 
+func init() {
+	genData := []byte(`{"balances": {"A": 0, "B": 1}}`)
+	if err := appFs.WriteFile(genF, genData, os.ModeAppend); err != nil {
+		fmt.Printf("error writing to genesis file: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := appFs.WriteFile(txF, []byte{}, os.ModeAppend); err != nil {
+		fmt.Printf("error writing to transaction file: %v\n", err)
+		os.Exit(1)
+	}
+}
+
 var (
 	dir  = database.Dir
 	genF = filepath.Join(dir, database.GenF)
@@ -31,15 +45,6 @@ var (
 
 func TestNewStateFromDisk(t *testing.T) {
 	t.Run("assert accounts and balances from new state", func(t *testing.T) {
-		genData := []byte(`{"balances": {"A": 0, "B": 1}}`)
-		if err := appFs.WriteFile(genF, genData, os.ModeAppend); err != nil {
-			t.Fatalf("error writing to genesis file: %v", err)
-		}
-
-		if err := appFs.WriteFile(txF, []byte{}, os.ModeAppend); err != nil {
-			t.Fatalf("error writing to transaction file: %v", err)
-		}
-
 		s, err := database.NewStateFromDisk()
 		if err != nil {
 			t.Fatalf("error loading state: %v", err)
@@ -50,15 +55,6 @@ func TestNewStateFromDisk(t *testing.T) {
 	})
 
 	t.Run("assert error insufficent balance", func(t *testing.T) {
-		genData := []byte(`{"balances": {"A": 0, "B": 1}}`)
-		if err := appFs.WriteFile(genF, genData, os.ModeAppend); err != nil {
-			t.Fatalf("error writing to genesis file: %v", err)
-		}
-
-		if err := appFs.WriteFile(txF, []byte{}, os.ModeAppend); err != nil {
-			t.Fatalf("error writing to transaction file: %v", err)
-		}
-
 		s, err := database.NewStateFromDisk()
 		if err != nil {
 			t.Fatalf("error loading state: %v", err)

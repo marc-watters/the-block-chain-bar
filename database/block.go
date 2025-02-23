@@ -1,6 +1,10 @@
 package database
 
-import "encoding/hex"
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+)
 
 type Hash [32]byte
 
@@ -20,4 +24,13 @@ type Block struct {
 
 func NewBlock(parent Hash, time uint64, txs []Tx) Block {
 	return Block{BlockHeader{parent, time}, txs}
+}
+
+func (b Block) Hash() (Hash, error) {
+	bj, err := json.Marshal(b)
+	if err != nil {
+		return Hash{}, err
+	}
+
+	return sha256.Sum256(bj), nil
 }

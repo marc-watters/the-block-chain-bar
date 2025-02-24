@@ -22,8 +22,8 @@ type Block struct {
 	Payload []Tx        // new transactions only (payload)
 }
 
-func NewBlock(parent Hash, time uint64, txs []Tx) Block {
-	return Block{BlockHeader{parent, time}, txs}
+func NewBlock(parent Hash, height uint64, time uint64, txs []Tx) Block {
+	return Block{BlockHeader{parent, height, time}, txs}
 }
 
 func (b Block) Hash() (Hash, error) {
@@ -37,6 +37,7 @@ func (b Block) Hash() (Hash, error) {
 
 type BlockHeader struct {
 	Parent Hash // parent block reference
+	Height uint64
 	Time   uint64
 }
 

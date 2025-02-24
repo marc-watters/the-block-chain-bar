@@ -204,3 +204,20 @@ func (s *State) apply(tx Tx) error {
 
 	return nil
 }
+
+func (s *State) copy() State {
+	c := State{}
+	c.hasGenesisBlock = s.hasGenesisBlock
+	c.latestBlock = s.latestBlock
+	c.latestBlockHash = s.latestBlockHash
+	c.txMempool = make([]Tx, len(s.txMempool))
+	c.Balances = make(map[Account]uint)
+
+	for acc, bal := range s.Balances {
+		c.Balances[acc] = bal
+	}
+
+	c.txMempool = append(c.txMempool, s.txMempool...)
+
+	return c
+}

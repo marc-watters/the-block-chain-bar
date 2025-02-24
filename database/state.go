@@ -221,6 +221,16 @@ func (s *State) copy() State {
 	return c
 }
 
+func applyTXs(txs []Tx, s *State) error {
+	for _, tx := range txs {
+		err := applyTx(tx, s)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func applyTx(tx Tx, s *State) error {
 	if tx.IsReward() {
 		s.Balances[tx.To] += tx.Value

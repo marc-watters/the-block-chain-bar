@@ -13,6 +13,8 @@ func init() {
 	database.AppFs = &afero.Afero{Fs: afero.NewOsFs()}
 }
 
+const flagDataDir = "datadir"
+
 func main() {
 	tbbCmd := &cobra.Command{
 		Use:   "tbb",
@@ -33,6 +35,13 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+}
+
+func addDefaultRequiredFlags(cmd *cobra.Command) {
+	cmd.Flags().String(flagDataDir, "", "Absolute path to the node data dir where the DB will/is stored")
+	if err := cmd.MarkFlagRequired(flagDataDir); err != nil {
+		fmt.Fprintf(os.Stderr, "error marking %s flag required: %v", flagDataDir, err)
 	}
 }
 

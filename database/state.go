@@ -185,7 +185,6 @@ func (s *State) applyBlock(b Block) error {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -220,4 +219,20 @@ func (s *State) copy() State {
 	c.txMempool = append(c.txMempool, s.txMempool...)
 
 	return c
+}
+
+func applyTx(tx Tx, s *State) error {
+	if tx.IsReward() {
+		s.Balances[tx.To] += tx.Value
+		return nil
+	}
+
+	if s.Balances[tx.From] < tx.Value {
+		return ErrInsufficientBalance{tx.From, tx.To, tx.Value}
+	}
+
+	s.Balances[tx.From] -= tx.Value
+	s.Balances[tx.To] += tx.Value
+
+	return nil
 }

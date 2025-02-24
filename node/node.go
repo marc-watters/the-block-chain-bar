@@ -41,32 +41,7 @@ func Run(dataDir string) error {
 	})
 
 	http.HandleFunc("/tx/add", func(w http.ResponseWriter, r *http.Request) {
-		req := TxAddReq{}
-		err := readReq(r, req)
-		if err != nil {
-			writeErrRes(w, err)
-			return
-		}
-
-		tx := database.NewTx(
-			database.NewAccount(req.From),
-			database.NewAccount(req.To),
-			req.Value,
-			req.Data,
-		)
-		err = s.AddTx(tx)
-		if err != nil {
-			writeErrRes(w, err)
-			return
-		}
-
-		hash, err := s.Persist()
-		if err != nil {
-			writeErrRes(w, err)
-			return
-		}
-
-		writeRes(w, TxAddRes{hash})
+		txAddHandler(w, r, s)
 	})
 
 	return http.ListenAndServe(":8080", nil)
@@ -74,6 +49,35 @@ func Run(dataDir string) error {
 
 func listBalancesHandler(w http.ResponseWriter, _ *http.Request, s *database.State) {
 	writeRes(w, BalanceRes{s.LatestHash(), s.Balances})
+}
+
+func txAddHandler(w http.ResponseWriter, r *http.Request, s *database.State) {
+	req := TxAddReq{}
+	err := readReq(r, &req)
+	if err != nil {
+		writeErrRes(w, err)
+		return
+	}
+
+	tx := database.NewTx(
+		database.NewAccount(req.From),
+		database.NewAccount(req.To),
+		req.Value,
+		req.Data,
+	)
+	err = s.AddTx(tx)
+	if err != nil {
+		writeErrRes(w, err)
+		return
+	}
+
+	hash, err := s.Persist()
+	if err != nil {
+		writeErrRes(w, err)
+		return
+	}
+
+	writeRes(w, TxAddRes{hash})
 }
 
 func readReq(r *http.Request, reqBody any) error {

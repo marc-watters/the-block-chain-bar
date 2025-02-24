@@ -18,6 +18,13 @@ type ErrRes struct {
 	Error string `json:"error"`
 }
 
+type TxAddReq struct {
+	From  string `json:"from"`
+	To    string `json:"to"`
+	Value uint   `json:"value"`
+	Data  string `json:"data"`
+}
+
 func Run(dataDir string) error {
 	s, err := database.NewStateFromDisk(dataDir)
 	if err != nil {
@@ -30,6 +37,7 @@ func Run(dataDir string) error {
 	})
 
 	http.HandleFunc("/tx/add", func(w http.ResponseWriter, r *http.Request) {
+		req := TxAddReq{}
 		reqBody, err := io.ReadAll(r.Body)
 		if err != nil {
 			writeErrRes(w, err)
@@ -37,12 +45,6 @@ func Run(dataDir string) error {
 		}
 		defer r.Body.Close()
 
-		req := struct {
-			From  string `json:"from"`
-			To    string `json:"to"`
-			Value uint   `json:"value"`
-			Data  string `json:"data"`
-		}{}
 		err = json.Unmarshal(reqBody, &req)
 		if err != nil {
 			writeErrRes(w, err)

@@ -80,6 +80,8 @@ func txAddCmd() *cobra.Command {
 		},
 	}
 
+	addDefaultRequiredFlags(cmd)
+
 	cmd.Flags().String(flagFrom, "", "Which account to send tokens from")
 	if err := cmd.MarkFlagRequired(flagFrom); err != nil {
 		fmt.Fprintln(os.Stderr, err)

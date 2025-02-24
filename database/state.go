@@ -92,6 +92,16 @@ func (s *State) Add(tx Tx) error {
 	return nil
 }
 
+func (s *State) AddBlock(b Block) error {
+	for _, tx := range b.Payload {
+		if err := s.AddTx(tx); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *State) Persist() (Hash, error) {
 	b := NewBlock(s.latestBlockHash, uint64(time.Now().Unix()), s.txMempool)
 	bh, err := b.Hash()

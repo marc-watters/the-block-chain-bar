@@ -45,6 +45,11 @@ func addDefaultRequiredFlags(cmd *cobra.Command) {
 	}
 }
 
+func getDataDirFromCmd(cmd *cobra.Command) string {
+	dataDir, _ := cmd.Flags().GetString(flagDataDir)
+	return database.ExpandPath(dataDir)
+}
+
 func incorrectUsageErr() error {
 	return fmt.Errorf("incorrect usage")
 }

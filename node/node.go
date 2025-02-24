@@ -37,7 +37,7 @@ func Run(dataDir string) error {
 	defer s.Close()
 
 	http.HandleFunc("/balances/list", func(w http.ResponseWriter, r *http.Request) {
-		writeRes(w, BalanceRes{s.LatestHash(), s.Balances})
+		listBalancesHandler(w, r, s)
 	})
 
 	http.HandleFunc("/tx/add", func(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +70,10 @@ func Run(dataDir string) error {
 	})
 
 	return http.ListenAndServe(":8080", nil)
+}
+
+func listBalancesHandler(w http.ResponseWriter, _ *http.Request, s *database.State) {
+	writeRes(w, BalanceRes{s.LatestHash(), s.Balances})
 }
 
 func readReq(r *http.Request, reqBody any) error {

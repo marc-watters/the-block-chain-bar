@@ -19,6 +19,7 @@ type State struct {
 	txMempool []Tx
 	db        afero.File
 
+	latestBlock     Block
 	latestBlockHash Hash
 }
 
@@ -50,6 +51,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 	s := &State{
 		Balances:        make(map[Account]uint),
 		txMempool:       make([]Tx, 0),
+		latestBlock:     Block{},
 		latestBlockHash: Hash{},
 		db:              txf,
 	}
@@ -71,6 +73,11 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 		}
 
 		bfsJson := scanner.Bytes()
+
+		if len(bfsJson) == 0 {
+			break
+		}
+
 		var bfs BlockFS
 		if err := json.Unmarshal(bfsJson, &bfs); err != nil {
 			return nil, err
@@ -80,6 +87,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 			return nil, err
 		}
 
+		s.latestBlock = bfs.Value
 		s.latestBlockHash = bfs.Key
 	}
 
@@ -107,7 +115,18 @@ func (s *State) AddBlock(b Block) error {
 }
 
 func (s *State) Persist() (Hash, error) {
-	b := NewBlock(s.latestBlockHash, uint64(time.Now().Unix()), s.txMempool)
+	lbh, err := s.latestBlock.Hash()
+	if err != nil {
+		return Hash{}, err
+	}
+
+	b := NewBlock(
+		lbh,
+		s.latestBlock.Header.Height+1,
+		uint64(time.Now().Unix()),
+		s.txMempool,
+	)
+
 	bh, err := b.Hash()
 	if err != nil {
 		return Hash{}, err
@@ -127,11 +146,12 @@ func (s *State) Persist() (Hash, error) {
 		return Hash{}, err
 	}
 
-	s.latestBlockHash = bh
+	s.latestBlockHash = lbh
+	s.latestBlock = b
 
 	s.txMempool = []Tx{}
 
-	return s.latestBlockHash, nil
+	return lbh, nil
 }
 
 func (s *State) LatestHash() Hash {

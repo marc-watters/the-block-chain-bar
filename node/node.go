@@ -26,20 +26,7 @@ func Run(dataDir string) error {
 	defer s.Close()
 
 	http.HandleFunc("/balances/list", func(w http.ResponseWriter, r *http.Request) {
-		payload := BalanceRes{s.LatestHash(), s.Balances}
-		payloadJson, err := json.Marshal(payload)
-		if err != nil {
-			writeErrRes(w, err)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, err = w.Write(payloadJson)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return
-		}
+		writeRes(w, BalanceRes{s.LatestHash(), s.Balances})
 	})
 
 	http.HandleFunc("/tx/add", func(w http.ResponseWriter, r *http.Request) {
@@ -83,22 +70,24 @@ func Run(dataDir string) error {
 		res := struct {
 			Hash database.Hash `json:"block_hash"`
 		}{hash}
-		resJson, err := json.Marshal(res)
-		if err != nil {
-			writeErrRes(w, err)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, err = w.Write(resJson)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
+		writeRes(w, res)
 	})
 
 	return http.ListenAndServe(":8080", nil)
+}
+
+func writeRes(w http.ResponseWriter, payload any) {
+	payloadJson, err := json.Marshal(payload)
+	if err != nil {
+		writeErrRes(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(payloadJson); err != nil {
+		fmt.Fprint(os.Stderr, err)
+	}
 }
 
 func writeErrRes(w http.ResponseWriter, err error) {

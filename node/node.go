@@ -38,14 +38,7 @@ func Run(dataDir string) error {
 
 	http.HandleFunc("/tx/add", func(w http.ResponseWriter, r *http.Request) {
 		req := TxAddReq{}
-		reqBody, err := io.ReadAll(r.Body)
-		if err != nil {
-			writeErrRes(w, err)
-			return
-		}
-		defer r.Body.Close()
-
-		err = json.Unmarshal(reqBody, &req)
+		err := readReq(r, req)
 		if err != nil {
 			writeErrRes(w, err)
 			return
@@ -76,6 +69,21 @@ func Run(dataDir string) error {
 	})
 
 	return http.ListenAndServe(":8080", nil)
+}
+
+func readReq(r *http.Request, reqBody any) error {
+	reqBodyJson, err := io.ReadAll(r.Body)
+	if err != nil {
+		return fmt.Errorf("unable to read request body: %s", err.Error())
+	}
+	defer r.Body.Close()
+
+	err = json.Unmarshal(reqBodyJson, &reqBody)
+	if err != nil {
+		return fmt.Errorf("unable to unmarshal request body: %s", err.Error())
+	}
+
+	return nil
 }
 
 func writeRes(w http.ResponseWriter, payload any) {

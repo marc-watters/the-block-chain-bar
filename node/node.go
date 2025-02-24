@@ -14,6 +14,10 @@ type BalanceRes struct {
 	Balances map[database.Account]uint `json:"balances"`
 }
 
+type ErrRes struct {
+	Error string `json:"error"`
+}
+
 func Run(dataDir string) error {
 	s, err := database.NewStateFromDisk(dataDir)
 	if err != nil {

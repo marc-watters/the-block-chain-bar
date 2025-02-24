@@ -29,23 +29,7 @@ func Run(dataDir string) error {
 		payload := BalanceRes{s.LatestHash(), s.Balances}
 		payloadJson, err := json.Marshal(payload)
 		if err != nil {
-			errRes := struct {
-				Error string `json:"error"`
-			}{err.Error()}
-
-			jsonErrRes, err := json.Marshal(errRes)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			_, err = w.Write(jsonErrRes)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				return
-			}
+			writeErrRes(w, err)
 			return
 		}
 
@@ -61,13 +45,7 @@ func Run(dataDir string) error {
 	http.HandleFunc("/tx/add", func(w http.ResponseWriter, r *http.Request) {
 		reqBody, err := io.ReadAll(r.Body)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			_, err = w.Write([]byte(fmt.Sprintf("unable to read request body: %v\n", err)))
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				return
-			}
+			writeErrRes(w, err)
 			return
 		}
 		defer r.Body.Close()
@@ -80,13 +58,7 @@ func Run(dataDir string) error {
 		}{}
 		err = json.Unmarshal(reqBody, &req)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			_, err = w.Write([]byte(fmt.Sprintf("unable to unmarshal request body: %v\n", err)))
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			writeErrRes(w, err)
 			return
 		}
 
@@ -98,25 +70,13 @@ func Run(dataDir string) error {
 		)
 		err = s.AddTx(tx)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			_, err = w.Write([]byte(fmt.Sprintf("error adding transaction: %v", err)))
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				return
-			}
+			writeErrRes(w, err)
 			return
 		}
 
 		hash, err := s.Persist()
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			_, err = w.Write([]byte(fmt.Sprintf("error persisting transaction: %v", err)))
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				return
-			}
+			writeErrRes(w, err)
 			return
 		}
 
@@ -125,13 +85,7 @@ func Run(dataDir string) error {
 		}{hash}
 		resJson, err := json.Marshal(res)
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			_, err = w.Write([]byte(fmt.Sprintf("unable to marshal response body: %s", err)))
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				return
-			}
+			writeErrRes(w, err)
 			return
 		}
 
@@ -145,4 +99,17 @@ func Run(dataDir string) error {
 	})
 
 	return http.ListenAndServe(":8080", nil)
+}
+
+func writeErrRes(w http.ResponseWriter, err error) {
+	jsonErrRes, err := json.Marshal(ErrRes{err.Error()})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusInternalServerError)
+	_, err = w.Write(jsonErrRes)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
 }

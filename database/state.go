@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/spf13/afero"
@@ -219,6 +220,20 @@ func (s *State) copy() State {
 	c.txMempool = append(c.txMempool, s.txMempool...)
 
 	return c
+}
+
+func applyBlock(b Block, s State) error {
+	nextExpectedBlockNumber := s.latestBlock.Header.Height + 1
+
+	if s.hasGenesisBlock && b.Header.Height != nextExpectedBlockNumber {
+		return fmt.Errorf("next expected block must be %q not %q", nextExpectedBlockNumber, b.Header.Height)
+	}
+
+	if s.hasGenesisBlock && s.latestBlock.Header.Height > 0 && !reflect.DeepEqual(b.Header.Parent, s.latestBlockHash) {
+		return fmt.Errorf("next block parent hash must be '%x' '%x'", s.latestBlockHash, b.Header.Parent)
+	}
+
+	return applyTXs(b.Payload, &s)
 }
 
 func applyTXs(txs []Tx, s *State) error {

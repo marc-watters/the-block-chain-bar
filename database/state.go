@@ -110,14 +110,40 @@ func (s *State) AddTx(tx Tx) error {
 	return nil
 }
 
-func (s *State) AddBlock(b Block) error {
-	for _, tx := range b.Payload {
-		if err := s.AddTx(tx); err != nil {
-			return err
-		}
+func (s *State) AddBlock(b Block) (Hash, error) {
+	pendingState := s.copy()
+
+	err := applyBlock(b, pendingState)
+	if err != nil {
+		return Hash{}, err
 	}
 
-	return nil
+	bh, err := b.Hash()
+	if err != nil {
+		return Hash{}, err
+	}
+
+	bfs := BlockFS{bh, b}
+
+	bfsJson, err := json.Marshal(bfs)
+	if err != nil {
+		return Hash{}, err
+	}
+
+	fmt.Println("Persisting new block to disk:")
+	fmt.Printf("\t%s\t\n", bfsJson)
+
+	_, err = s.db.Write(append(bfsJson, '\n'))
+	if err != nil {
+		return Hash{}, err
+	}
+
+	s.Balances = pendingState.Balances
+	s.hasGenesisBlock = true
+	s.latestBlockHash = bh
+	s.latestBlock = b
+
+	return bh, nil
 }
 
 func (s *State) Persist() (Hash, error) {

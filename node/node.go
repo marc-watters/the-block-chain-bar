@@ -29,6 +29,8 @@ type TxAddRes struct {
 	Hash database.Hash `json:"block_hash"`
 }
 
+const httpPort = 8080
+
 func Run(dataDir string) error {
 	s, err := database.NewStateFromDisk(dataDir)
 	if err != nil {
@@ -44,7 +46,7 @@ func Run(dataDir string) error {
 		txAddHandler(w, r, s)
 	})
 
-	return http.ListenAndServe(":8080", nil)
+	return http.ListenAndServe(fmt.Sprintf(":%d", httpPort), nil)
 }
 
 func listBalancesHandler(w http.ResponseWriter, _ *http.Request, s *database.State) {

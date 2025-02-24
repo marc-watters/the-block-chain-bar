@@ -9,6 +9,11 @@ import (
 	"tbb/v2/database"
 )
 
+type BalanceRes struct {
+	Hash     database.Hash             `json:"block_hash"`
+	Balances map[database.Account]uint `json:"balances"`
+}
+
 func Run(dataDir string) error {
 	s, err := database.NewStateFromDisk(dataDir)
 	if err != nil {
@@ -17,14 +22,7 @@ func Run(dataDir string) error {
 	defer s.Close()
 
 	http.HandleFunc("/balances/list", func(w http.ResponseWriter, r *http.Request) {
-		payload := struct {
-			Hash     database.Hash             `json:"block_hash"`
-			Balances map[database.Account]uint `json:"balances"`
-		}{
-			Hash:     s.LatestHash(),
-			Balances: s.Balances,
-		}
-
+		payload := BalanceRes{s.LatestHash(), s.Balances}
 		payloadJson, err := json.Marshal(payload)
 		if err != nil {
 			errRes := struct {

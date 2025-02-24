@@ -37,3 +37,7 @@ func fileExist(filePath string) bool {
 func writeGenesisToDisk(path string) error {
 	return AppFs.WriteFile(path, []byte(genesisJson), 0644)
 }
+
+func writeEmptyBlocksDbToDisk(path string) error {
+	return AppFs.WriteFile(path, []byte{}, os.ModePerm)
+}

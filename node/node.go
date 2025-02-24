@@ -25,6 +25,10 @@ type TxAddReq struct {
 	Data  string `json:"data"`
 }
 
+type TxAddRes struct {
+	Hash database.Hash `json:"block_hash"`
+}
+
 func Run(dataDir string) error {
 	s, err := database.NewStateFromDisk(dataDir)
 	if err != nil {
@@ -62,10 +66,7 @@ func Run(dataDir string) error {
 			return
 		}
 
-		res := struct {
-			Hash database.Hash `json:"block_hash"`
-		}{hash}
-		writeRes(w, res)
+		writeRes(w, TxAddRes{hash})
 	})
 
 	return http.ListenAndServe(":8080", nil)

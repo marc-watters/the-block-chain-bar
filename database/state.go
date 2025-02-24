@@ -21,6 +21,7 @@ type State struct {
 
 	latestBlock     Block
 	latestBlockHash Hash
+	hasGenesisBlock bool
 }
 
 const (
@@ -55,6 +56,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 		txMempool:       make([]Tx, 0),
 		latestBlock:     Block{},
 		latestBlockHash: Hash{},
+		hasGenesisBlock: false,
 		db:              txf,
 	}
 
@@ -91,6 +93,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 
 		s.latestBlock = bfs.Value
 		s.latestBlockHash = bfs.Key
+		s.hasGenesisBlock = true
 	}
 
 	return s, nil

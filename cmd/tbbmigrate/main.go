@@ -15,7 +15,7 @@ func init() {
 }
 
 func main() {
-	state, err := database.NewStateFromDisk()
+	state, err := database.NewStateFromDisk("../database")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

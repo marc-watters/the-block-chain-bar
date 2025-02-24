@@ -24,6 +24,7 @@ func main() {
 
 	block0 := database.NewBlock(
 		database.Hash{},
+		state.LatestBlock().Header.Height+1,
 		uint64(time.Now().Unix()),
 		[]database.Tx{
 			database.NewTx("andrej", "andrej", 3, ""),
@@ -43,6 +44,7 @@ func main() {
 
 	block1 := database.NewBlock(
 		b0Hash,
+		state.LatestBlock().Header.Height+1,
 		uint64(time.Now().Unix()),
 		[]database.Tx{
 			database.NewTx("andrej", "andrej", 700, "reward"),

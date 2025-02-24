@@ -66,6 +66,7 @@ func TestNewStateFromDisk(t *testing.T) {
 
 		block := database.NewBlock(
 			database.Hash{},
+			s.LatestBlock().Header.Height+1,
 			uint64(time.Now().Unix()),
 			[]database.Tx{
 				database.NewTx(a, b, 1, ""),
@@ -143,6 +144,7 @@ func createBlock(t testing.TB, s *database.State, from, to database.Account, val
 
 	b := database.NewBlock(
 		h,
+		s.LatestBlock().Header.Height+1,
 		uint64(time.Now().Unix()),
 		[]database.Tx{
 			database.NewTx(from, to, value, ""),

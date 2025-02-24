@@ -158,6 +158,10 @@ func (s *State) LatestHash() Hash {
 	return s.latestBlockHash
 }
 
+func (s *State) LatestBlock() Block {
+	return s.latestBlock
+}
+
 func (s *State) Close() {
 	s.db.Close()
 }

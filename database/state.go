@@ -167,6 +167,14 @@ func (s *State) LatestBlock() Block {
 	return s.latestBlock
 }
 
+func (s *State) NextBlockHeight() uint64 {
+	if !s.hasGenesisBlock {
+		return uint64(0)
+	}
+
+	return s.LatestBlock().Header.Height + 1
+}
+
 func (s *State) Close() {
 	s.db.Close()
 }

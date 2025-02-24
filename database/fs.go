@@ -13,6 +13,27 @@ const genesisJson = `
     "andrej": 1000000
   }
 }`
+
+func initDataDirIfNotExists(dataDir string) error {
+	if fileExist(getGenesisJsonFilePath(dataDir)) {
+		return nil
+	}
+
+	if err := os.MkdirAll(getDatabaseDirPath(dataDir), os.ModePerm); err != nil {
+		return err
+	}
+
+	if err := writeGenesisToDisk(getGenesisJsonFilePath(dataDir)); err != nil {
+		return err
+	}
+
+	if err := writeEmptyBlocksDbToDisk(getBlocksDbFilePath(dataDir)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func getDatabaseDirPath(dataDir string) string {
 	return filepath.Join(dataDir, Dir)
 }

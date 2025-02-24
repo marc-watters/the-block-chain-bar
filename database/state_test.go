@@ -36,6 +36,7 @@ func init() {
 }
 
 var (
+	cwd  = "./"
 	dir  = database.Dir
 	genF = filepath.Join(dir, database.GenF)
 	txF  = filepath.Join(dir, database.TxF)
@@ -48,7 +49,7 @@ var (
 
 func TestNewStateFromDisk(t *testing.T) {
 	t.Run("assert accounts and balances from new state", func(t *testing.T) {
-		s, err := database.NewStateFromDisk()
+		s, err := database.NewStateFromDisk(cwd)
 		if err != nil {
 			t.Fatalf("error loading state: %v", err)
 		}
@@ -58,7 +59,7 @@ func TestNewStateFromDisk(t *testing.T) {
 	})
 
 	t.Run("assert error insufficent balance", func(t *testing.T) {
-		s, err := database.NewStateFromDisk()
+		s, err := database.NewStateFromDisk(cwd)
 		if err != nil {
 			t.Fatalf("error loading state: %v", err)
 		}
@@ -88,7 +89,7 @@ func TestNewStateFromDisk(t *testing.T) {
 			t.Fatalf("error truncating transaction file: %v", err)
 		}
 
-		s, err := database.NewStateFromDisk()
+		s, err := database.NewStateFromDisk(cwd)
 		if err != nil {
 			t.Fatalf("error loading state: %v", err)
 		}
@@ -109,7 +110,7 @@ func TestNewStateFromDisk(t *testing.T) {
 			t.Fatalf("error truncating transaction file: %v", err)
 		}
 
-		s, err := database.NewStateFromDisk()
+		s, err := database.NewStateFromDisk(cwd)
 		if err != nil {
 			t.Fatalf("error loading state: %v", err)
 		}

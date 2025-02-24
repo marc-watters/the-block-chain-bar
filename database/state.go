@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/spf13/afero"
@@ -28,15 +27,20 @@ const (
 	TxF  = "block.db"
 )
 
-func NewStateFromDisk() (*State, error) {
+func NewStateFromDisk(dataDir string) (*State, error) {
+	err := initDataDirIfNotExists(dataDir)
+	if err != nil {
+		return nil, err
+	}
+
 	// load genesis file
-	g, err := loadGenesis(filepath.Join(Dir, GenF))
+	g, err := loadGenesis(getGenesisJsonFilePath(dataDir))
 	if err != nil {
 		return nil, err
 	}
 
 	// load transaction file
-	txf, err := AppFs.OpenFile(filepath.Join(Dir, TxF), os.O_APPEND|os.O_RDWR, 0600)
+	txf, err := AppFs.OpenFile(getBlocksDbFilePath(dataDir), os.O_APPEND|os.O_RDWR, 0600)
 	if err != nil {
 		return nil, err
 	}

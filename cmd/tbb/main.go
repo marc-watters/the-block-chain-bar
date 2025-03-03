@@ -17,6 +17,8 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {},
 	}
 
+	tbbCmd.AddCommand(versionCmd())
+
 	err := tbbCmd.Execute()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -66,6 +66,15 @@ func NewStateFromDisk() (*State, error) {
 	return s, nil
 }
 
+func (s *State) Add(trx Trx) error {
+	if err := s.apply(trx); err != nil {
+		return err
+	}
+	s.trxMempool = append(s.trxMempool, trx)
+
+	return nil
+}
+
 func (s *State) apply(trx Trx) error {
 	if trx.IsReward() {
 		s.Balances[trx.To] += trx.Value

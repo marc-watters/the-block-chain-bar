@@ -47,4 +47,34 @@ func TestNewStateFromDisk(t *testing.T) {
 			t.Errorf("State.Balances = %v, want %v", got, want)
 		}
 	})
+
+	t.Run("assert error insufficient balance", func(t *testing.T) {
+		genData := []byte(`{"balances":{"a": 0,"b": 0}}`)
+		genFile := filepath.Join("database", "genesis.json")
+		err := appFS.WriteFile(genFile, genData, 0o400)
+		if err != nil {
+			t.Fatalf("error writing genesis file: %v", err)
+		}
+
+		trxData := []byte(``)
+		trxFile := filepath.Join("database", "trx.db")
+		err = appFS.WriteFile(trxFile, trxData, 0o400)
+		if err != nil {
+			t.Fatalf("error writing transaction file: %v", err)
+		}
+
+		s, err := db.NewStateFromDisk()
+		if err != nil {
+			t.Fatalf("NewStateFromDisk() error = %v", err)
+		}
+
+		err = s.Add(db.Trx{
+			From:  "a",
+			To:    "b",
+			Value: 1,
+		})
+		if err == nil {
+			t.Errorf("State.Add() error = %v, wanted %v", err, "insufficient balance")
+		}
+	})
 }

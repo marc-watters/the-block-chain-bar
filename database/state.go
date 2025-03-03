@@ -94,6 +94,10 @@ func (s *State) Persist() error {
 	return nil
 }
 
+func (s *State) Close() error {
+	return s.db.Close()
+}
+
 func (s *State) apply(trx Trx) error {
 	if trx.IsReward() {
 		s.Balances[trx.To] += trx.Value

@@ -8,9 +8,9 @@ import (
 
 const (
 	Major  = "1"
-	Minor  = "0"
+	Minor  = "1"
 	Fix    = "0"
-	Verbal = "Add tbb command"
+	Verbal = "Add balances command"
 )
 
 func versionCmd() *cobra.Command {

@@ -21,25 +21,15 @@ func init() {
 type State struct {
 	Balances map[Account]uint64
 
-	trxMempool []struct {
-		From  Account
-		To    Account
-		Value uint64
-		Data  string
-	}
-	db afero.File
+	trxMempool []Trx
+	db         afero.File
 }
 
 func NewStateFromDisk() (*State, error) {
 	s := &State{
-		Balances: make(map[Account]uint64),
-		trxMempool: make([]struct {
-			From  Account
-			To    Account
-			Value uint64
-			Data  string
-		}, 0),
-		db: nil,
+		Balances:   make(map[Account]uint64),
+		trxMempool: make([]Trx, 0),
+		db:         nil,
 	}
 
 	g, err := loadGenesis(filepath.Join("database", "genesis.json"))
@@ -63,12 +53,7 @@ func NewStateFromDisk() (*State, error) {
 			return nil, err
 		}
 
-		var trx struct {
-			From  Account
-			To    Account
-			Value uint64
-			Data  string
-		}
+		var trx Trx
 		if err := json.Unmarshal(scanner.Bytes(), &trx); err != nil {
 			return nil, err
 		}

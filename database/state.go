@@ -75,6 +75,25 @@ func (s *State) Add(trx Trx) error {
 	return nil
 }
 
+func (s *State) Persist() error {
+	for len(s.trxMempool) > 0 {
+		var trx Trx
+		trx, s.trxMempool = s.trxMempool[0], s.trxMempool[1:]
+
+		trxJSON, err := json.Marshal(trx)
+		if err != nil {
+			return err
+		}
+
+		_, err = s.db.Write(append(trxJSON, '\n'))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *State) apply(trx Trx) error {
 	if trx.IsReward() {
 		s.Balances[trx.To] += trx.Value

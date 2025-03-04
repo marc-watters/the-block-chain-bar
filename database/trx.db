@@ -6,3 +6,4 @@
 {"From":"babayaga","To":"ceasar","Value":1000,"Data":""}
 {"From":"babayaga","To":"andrej","Value":50,"Data":""}
 {"From":"andrej","To":"andrej","Value":100,"Data":"reward"}
+{"From":"andrej","To":"andrej","Value":100,"Data":"reward"}

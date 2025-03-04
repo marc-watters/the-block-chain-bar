@@ -3,7 +3,6 @@ package database
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"io"
 	"maps"
 	"os"
@@ -111,7 +110,7 @@ func (s *State) apply(trx Trx) error {
 	}
 
 	if trx.Value > s.Balances[trx.From] {
-		return fmt.Errorf("insufficient balance")
+		return new(ErrInsufficientBalance)
 	}
 
 	s.Balances[trx.From] -= trx.Value

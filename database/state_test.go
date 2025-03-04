@@ -1,6 +1,7 @@
 package database_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -45,17 +46,21 @@ func TestNewStateFromDisk(t *testing.T) {
 			/* genesis     */ []byte(`{"balances":{"a": 0,"b": 0}}`),
 			/* transaction */ []byte(``),
 		)
-		err := s.Add(db.Trx{
+
+		var got error
+		var want *db.ErrInsufficientBalance
+
+		got = s.Add(db.Trx{
 			From:  "b",
 			To:    "a",
 			Value: 1,
 		})
-		if err == nil {
-			t.Errorf("State.Add() error = %v, wanted %v", err, "insufficient balance")
-		}
 
-		if err.Error() != "insufficient balance" {
-			t.Errorf("State.Add() error = %v, wanted %v", err, "insufficient balance")
+		if got == nil {
+			t.Fatalf("State.Add() error = %v, wanted %v", got, want)
+		}
+		if !errors.As(got, &want) {
+			t.Errorf("State.Add() error type = %T, wanted %T", got, want)
 		}
 	})
 }

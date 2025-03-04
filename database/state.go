@@ -58,18 +58,26 @@ func NewStateFromDisk() (*State, error) {
 			return nil, err
 		}
 
-		if trx.Data == "reward" {
-			s.Balances[trx.To] += trx.Value
-			continue
+		if err := s.apply(trx); err != nil {
+			return nil, err
 		}
-
-		if trx.Value > s.Balances[trx.From] {
-			return nil, fmt.Errorf("insufficient balance")
-		}
-
-		s.Balances[trx.From] -= trx.Value
-		s.Balances[trx.To] += trx.Value
 	}
 
 	return s, nil
+}
+
+func (s *State) apply(trx Trx) error {
+	if trx.IsReward() {
+		s.Balances[trx.To] += trx.Value
+		return nil
+	}
+
+	if trx.Value > s.Balances[trx.From] {
+		return fmt.Errorf("insufficient balance")
+	}
+
+	s.Balances[trx.From] -= trx.Value
+	s.Balances[trx.To] += trx.Value
+
+	return nil
 }

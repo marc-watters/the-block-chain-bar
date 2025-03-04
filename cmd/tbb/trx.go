@@ -21,7 +21,7 @@ func trxCmd() *cobra.Command {
 		Use:   "trx",
 		Short: "Interact with trxs (add...)",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return fmt.Errorf("incorrect usage")
+			return incorrectUsage()
 		},
 		Run: func(cmd *cobra.Command, args []string) {},
 	}

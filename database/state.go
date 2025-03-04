@@ -111,6 +111,10 @@ func (s *State) Persist() error {
 	return nil
 }
 
+func (s *State) LatestSnapshot() Snapshot {
+	return s.snapshot
+}
+
 func (s *State) Close() error {
 	return s.db.Close()
 }

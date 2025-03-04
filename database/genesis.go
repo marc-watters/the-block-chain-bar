@@ -3,7 +3,7 @@ package database
 import "encoding/json"
 
 type genesis struct {
-	Balances map[string]uint64 `json:"balances"`
+	Balances map[Account]uint64 `json:"balances"`
 }
 
 func loadGenesis(path string) (genesis, error) {

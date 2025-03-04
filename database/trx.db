@@ -3,3 +3,6 @@
 {"from":"andrej","to":"babayaga","value":2000,"data":""}
 {"from":"andrej","to":"andrej","value":100,"data":"reward"}
 {"from":"babayaga","to":"andrej","value":1,"data":""}
+{"From":"babayaga","To":"ceasar","Value":1000,"Data":""}
+{"From":"babayaga","To":"andrej","Value":50,"Data":""}
+{"From":"andrej","To":"andrej","Value":100,"Data":"reward"}

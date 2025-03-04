@@ -104,6 +104,16 @@ func (s *State) Close() error {
 }
 
 func (s *State) apply(trx Trx) error {
+	if trx.From == "" {
+		return NewInvalidTransaction("From")
+	}
+	if trx.To == "" {
+		return NewInvalidTransaction("To")
+	}
+	if trx.Value == 0 {
+		return NewInvalidTransaction("Value")
+	}
+
 	if trx.IsReward() {
 		s.Balances[trx.To] += trx.Value
 		return nil

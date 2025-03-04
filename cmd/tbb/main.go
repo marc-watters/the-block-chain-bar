@@ -12,7 +12,7 @@ func main() {
 		Use:   "tbb",
 		Short: "The Blockchain Bar CLI",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return fmt.Errorf("incorrect usage")
+			return incorrectUsage()
 		},
 		Run: func(cmd *cobra.Command, args []string) {},
 	}
@@ -28,4 +28,8 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func incorrectUsage() error {
+	return fmt.Errorf("incorrect usage")
 }

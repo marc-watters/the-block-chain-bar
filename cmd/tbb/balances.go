@@ -15,7 +15,7 @@ func balancesCmd() *cobra.Command {
 		Use:   "balances",
 		Short: "Interact with balances",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return fmt.Errorf("incorrect usage")
+			return incorrectUsage()
 		},
 		Run: func(cmd *cobra.Command, args []string) {},
 	}

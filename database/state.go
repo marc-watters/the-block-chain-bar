@@ -42,13 +42,7 @@ func NewStateFromDisk() (*State, error) {
 		db: nil,
 	}
 
-	genData, err := AppFS.ReadFile(filepath.Join("database", "genesis.json"))
-	if err != nil {
-		return nil, err
-	}
-
-	var g struct{ Balances map[string]uint64 }
-	err = json.Unmarshal(genData, &g)
+	g, err := loadGenesis(filepath.Join("database", "genesis.json"))
 	if err != nil {
 		return nil, err
 	}

@@ -19,11 +19,11 @@ func init() {
 }
 
 type State struct {
-	Balances map[string]uint64
+	Balances map[Account]uint64
 
 	trxMempool []struct {
-		From  string
-		To    string
+		From  Account
+		To    Account
 		Value uint64
 		Data  string
 	}
@@ -32,10 +32,10 @@ type State struct {
 
 func NewStateFromDisk() (*State, error) {
 	s := &State{
-		Balances: make(map[string]uint64),
+		Balances: make(map[Account]uint64),
 		trxMempool: make([]struct {
-			From  string
-			To    string
+			From  Account
+			To    Account
 			Value uint64
 			Data  string
 		}, 0),
@@ -64,8 +64,8 @@ func NewStateFromDisk() (*State, error) {
 		}
 
 		var trx struct {
-			From  string
-			To    string
+			From  Account
+			To    Account
 			Value uint64
 			Data  string
 		}

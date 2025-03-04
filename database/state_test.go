@@ -122,6 +122,47 @@ func TestNewStateFromDisk(t *testing.T) {
 			t.Errorf("State.Balances = %+v, want = %+v", got, want)
 		}
 	})
+
+	t.Run("assert add invalid transaction", func(t *testing.T) {
+		s := composeState(t,
+			/* genesis     */ []byte(`{"balances":{"A": 1,"B": 0}}`),
+			/* transaction */ []byte(``),
+		)
+
+		tests := []struct {
+			name string
+			trx  db.Trx
+			want error
+		}{
+			{
+				"zero value field: 'From'",
+				db.Trx{From: "", To: "A", Value: 1},
+				db.NewInvalidTransaction("From"),
+			},
+			{
+				"zero value field: 'To'",
+				db.Trx{From: "A", To: "", Value: 1},
+				db.NewInvalidTransaction("To"),
+			},
+			{
+				"zero value field: 'value'",
+				db.Trx{From: "A", To: "B", Value: 0},
+				db.NewInvalidTransaction("Value"),
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				got := s.Add(tt.trx)
+				if got == nil {
+					t.Fatalf("State.Add() error = %v, wanted %s", got, tt.want)
+				}
+				if got != tt.want {
+					t.Errorf("State.Add() error = %v, wanted %s", got, tt.want)
+				}
+			})
+		}
+	})
 }
 
 func composeState(t testing.TB, genData, trxData []byte) *db.State {

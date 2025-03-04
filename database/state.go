@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"io"
 	"maps"
 	"os"
@@ -55,22 +56,22 @@ func NewStateFromDisk() (*State, error) {
 		return nil, err
 	}
 
-	if _, err := s.db.Seek(0, io.SeekStart); err != nil {
+	if _, err = s.db.Seek(0, io.SeekStart); err != nil {
 		return nil, err
 	}
 
 	scanner := bufio.NewScanner(s.db)
 	for scanner.Scan() {
-		if err := scanner.Err(); err != nil {
+		if err = scanner.Err(); err != nil {
 			return nil, err
 		}
 
 		var trx Trx
-		if err := json.Unmarshal(scanner.Bytes(), &trx); err != nil {
+		if err = json.Unmarshal(scanner.Bytes(), &trx); err != nil {
 			return nil, err
 		}
 
-		if err := s.apply(trx); err != nil {
+		if err = s.apply(trx); err != nil {
 			return nil, err
 		}
 	}
@@ -92,23 +93,32 @@ func (s *State) Add(trx Trx) error {
 	return nil
 }
 
-func (s *State) Persist() error {
+func (s *State) Persist() (Snapshot, error) {
 	for len(s.trxMempool) > 0 {
 		var trx Trx
 		trx, s.trxMempool = s.trxMempool[0], s.trxMempool[1:]
 
 		trxJSON, err := json.Marshal(trx)
 		if err != nil {
-			return err
+			return Snapshot{}, err
 		}
 
+		fmt.Println("Persisting new transaction to disk:")
+		fmt.Printf("\t%s", trxJSON)
+		fmt.Println()
 		_, err = s.db.Write(append(trxJSON, '\n'))
 		if err != nil {
-			return err
+			return Snapshot{}, err
 		}
+
+		err = s.doSnapshot()
+		if err != nil {
+			return Snapshot{}, err
+		}
+		fmt.Printf("New DB Snapshot: %x\n", s.snapshot)
 	}
 
-	return nil
+	return s.snapshot, nil
 }
 
 func (s *State) LatestSnapshot() Snapshot {

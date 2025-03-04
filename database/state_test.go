@@ -73,7 +73,7 @@ func TestNewStateFromDisk(t *testing.T) {
 		})
 		checkError(t, "State.Add", err)
 
-		err = s.Persist()
+		_, err = s.Persist()
 		checkError(t, "State.Persist", err)
 
 		got := s.Balances
@@ -100,7 +100,7 @@ func TestNewStateFromDisk(t *testing.T) {
 			checkError(t, "State.Add", err)
 		}
 
-		err := s.Persist()
+		_, err := s.Persist()
 		checkError(t, "State.Persist", err)
 
 		got := s.Balances

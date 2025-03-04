@@ -40,6 +40,8 @@ var balancesListCmd = &cobra.Command{
 		fmt.Printf("%s\n", strings.Repeat("=", 72))
 		fmt.Printf("%[1]s Account Balances %[1]s\n", strings.Repeat(" ", 27))
 		fmt.Printf("%s\n", strings.Repeat("=", 72))
+		fmt.Printf("%[1]s %x %[1]s\n", strings.Repeat("*", 3), s.LatestSnapshot())
+		fmt.Printf("%s\n", strings.Repeat("-", 72))
 
 		w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', 0)
 		for k, v := range s.Balances {

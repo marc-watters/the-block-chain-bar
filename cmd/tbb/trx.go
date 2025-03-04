@@ -71,13 +71,13 @@ func trxAddCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = s.Persist()
+			_, err = s.Persist()
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
 
-			fmt.Println("trx successfully added to the ledger")
+			fmt.Println("trx successfully persisted to the ledger")
 		},
 	}
 

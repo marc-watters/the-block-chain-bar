@@ -18,6 +18,12 @@ func init() {
 	AppFS = &afero.Afero{Fs: afero.NewOsFs()}
 }
 
+const (
+	Dir     = "database"
+	GenFile = "genesis.json"
+	TrxFile = "trx.db"
+)
+
 type State struct {
 	Balances map[Account]uint64
 
@@ -32,13 +38,13 @@ func NewStateFromDisk() (*State, error) {
 		db:         nil,
 	}
 
-	g, err := loadGenesis(filepath.Join("database", "genesis.json"))
+	g, err := loadGenesis(filepath.Join(Dir, GenFile))
 	if err != nil {
 		return nil, err
 	}
 	maps.Copy(s.Balances, g.Balances)
 
-	s.db, err = AppFS.OpenFile(filepath.Join("database", "trx.db"), os.O_APPEND|os.O_RDWR, 0o600)
+	s.db, err = AppFS.OpenFile(filepath.Join(Dir, TrxFile), os.O_APPEND|os.O_RDWR, 0o600)
 	if err != nil {
 		return nil, err
 	}

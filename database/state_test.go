@@ -10,7 +10,12 @@ import (
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 )
 
-var appFS *afero.Afero
+var (
+	appFS *afero.Afero
+
+	genFile = filepath.Join(db.Dir, db.GenFile)
+	trxFile = filepath.Join(db.Dir, db.TrxFile)
+)
 
 func init() {
 	db.AppFS = &afero.Afero{Fs: afero.NewMemMapFs()}
@@ -20,14 +25,12 @@ func init() {
 func TestNewStateFromDisk(t *testing.T) {
 	t.Run("assert new state accounts and balances", func(t *testing.T) {
 		genData := []byte(`{"balances":{"a": 1,"b": 0}}`)
-		genFile := filepath.Join("database", "genesis.json")
 		err := appFS.WriteFile(genFile, genData, 0o400)
 		if err != nil {
 			t.Fatalf("error writing genesis file: %v", err)
 		}
 
 		trxData := []byte(``)
-		trxFile := filepath.Join("database", "trx.db")
 		err = appFS.WriteFile(trxFile, trxData, 0o400)
 		if err != nil {
 			t.Fatalf("error writing transaction file: %v", err)
@@ -50,14 +53,12 @@ func TestNewStateFromDisk(t *testing.T) {
 
 	t.Run("assert error insufficient balance", func(t *testing.T) {
 		genData := []byte(`{"balances":{"a": 0,"b": 0}}`)
-		genFile := filepath.Join("database", "genesis.json")
 		err := appFS.WriteFile(genFile, genData, 0o400)
 		if err != nil {
 			t.Fatalf("error writing genesis file: %v", err)
 		}
 
 		trxData := []byte(``)
-		trxFile := filepath.Join("database", "trx.db")
 		err = appFS.WriteFile(trxFile, trxData, 0o400)
 		if err != nil {
 			t.Fatalf("error writing transaction file: %v", err)

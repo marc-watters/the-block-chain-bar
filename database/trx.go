@@ -20,3 +20,7 @@ func NewAccount(value string) Account {
 func NewTrx(from Account, to Account, value uint64, data string) Trx {
 	return Trx{from, to, value, data}
 }
+
+func (t Trx) IsReward() bool {
+	return t.Data == "reward"
+}

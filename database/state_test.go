@@ -51,8 +51,8 @@ func TestNewStateFromDisk(t *testing.T) {
 		var want *db.ErrInsufficientBalance
 
 		got = s.Add(db.Trx{
-			From:  "b",
-			To:    "a",
+			From:  "a",
+			To:    "b",
 			Value: 1,
 		})
 
@@ -86,6 +86,38 @@ func TestNewStateFromDisk(t *testing.T) {
 
 		got := s.Balances
 		want := map[db.Account]uint64{"a": 0, "b": 1}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("State.Balances = %+v, want = %+v", got, want)
+		}
+	})
+
+	t.Run("assert add multiple transactions", func(t *testing.T) {
+		s := composeState(t,
+			/* genesis     */ []byte(`{"balances": {"a": 1, "b": 0}}`),
+			/* transaction */ []byte(``),
+		)
+
+		a := db.NewAccount("a")
+		b := db.NewAccount("b")
+		trxs := []db.Trx{
+			{From: a, To: b, Value: 1},
+			{From: b, To: a, Value: 1},
+		}
+
+		for i := range trxs {
+			err := s.Add(trxs[i])
+			if err != nil {
+				t.Fatalf("State.Add() error = %v", err)
+			}
+		}
+
+		err := s.Persist()
+		if err != nil {
+			t.Fatalf("State.Persist() error = %v", err)
+		}
+
+		got := s.Balances
+		want := map[db.Account]uint64{"a": 1, "b": 0}
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("State.Balances = %+v, want = %+v", got, want)
 		}

@@ -23,17 +23,23 @@ const (
 	TrxFile = "trx.db"
 )
 
-type State struct {
-	Balances map[Account]uint64
+type (
+	Snapshot [32]byte
 
-	trxMempool []Trx
-	db         afero.File
-}
+	State struct {
+		Balances map[Account]uint64
+
+		trxMempool []Trx
+		snapshot   Snapshot
+		db         afero.File
+	}
+)
 
 func NewStateFromDisk() (*State, error) {
 	s := &State{
 		Balances:   make(map[Account]uint64),
 		trxMempool: make([]Trx, 0),
+		snapshot:   Snapshot{},
 		db:         nil,
 	}
 

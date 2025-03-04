@@ -13,6 +13,7 @@ const (
 	flagFrom  = "from"
 	flagTo    = "to"
 	flagValue = "value"
+	flagData  = "data"
 )
 
 func trxCmd() *cobra.Command {
@@ -50,7 +51,12 @@ func trxAddCmd() *cobra.Command {
 				fmt.Fprintln(os.Stderr, err)
 			}
 
-			trx := db.NewTrx(db.NewAccount(from), db.NewAccount(to), value, "")
+			data, err := cmd.Flags().GetString(flagData)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+
+			trx := db.NewTrx(db.NewAccount(from), db.NewAccount(to), value, data)
 
 			s, err := db.NewStateFromDisk()
 			if err != nil {
@@ -89,6 +95,8 @@ func trxAddCmd() *cobra.Command {
 	if err := cmd.MarkFlagRequired(flagValue); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
+
+	cmd.Flags().String(flagData, "", "Possible values: 'reward'")
 
 	return cmd
 }

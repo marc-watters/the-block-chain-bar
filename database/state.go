@@ -128,6 +128,15 @@ func (s *State) Close() error {
 	return s.db.Close()
 }
 
+func (s *State) applyBlock(b Block) error {
+	for _, trx := range b.TRXs {
+		if err := s.apply(trx); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *State) apply(trx Trx) error {
 	if trx.From == "" {
 		return NewInvalidTransaction("From")

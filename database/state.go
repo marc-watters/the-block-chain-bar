@@ -83,7 +83,14 @@ func NewStateFromDisk() (*State, error) {
 	return s, nil
 }
 
-func (s *State) Add(trx Trx) error {
+func (s *State) AddBlock(b Block) error {
+	for _, trx := range b.TRXs {
+		if err := s.AddTrx(trx); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 	if err := s.apply(trx); err != nil {
 		return err
 	}

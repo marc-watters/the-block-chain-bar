@@ -2,7 +2,6 @@ package database
 
 import (
 	"bufio"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -174,22 +173,6 @@ func (s *State) apply(trx Trx) error {
 
 	s.Balances[trx.From] -= trx.Value
 	s.Balances[trx.To] += trx.Value
-
-	return nil
-}
-
-func (s *State) doSnapshot() error {
-	_, err := s.db.Seek(0, 0)
-	if err != nil {
-		return err
-	}
-
-	trxsData, err := io.ReadAll(s.db)
-	if err != nil {
-		return err
-	}
-
-	s.snapshot = sha256.Sum256(trxsData)
 
 	return nil
 }

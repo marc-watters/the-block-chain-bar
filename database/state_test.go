@@ -32,13 +32,9 @@ func TestNewStateFromDisk(t *testing.T) {
 		)
 
 		got := s.Balances
-		want := map[db.Account]uint64{
-			"a": 1,
-			"b": 0,
-		}
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("State.Balances = %v, want %v", got, want)
-		}
+		want := map[db.Account]uint64{"a": 1, "b": 0}
+
+		assertBalance(t, got, want)
 	})
 
 	t.Run("assert error insufficient balance", func(t *testing.T) {
@@ -86,9 +82,8 @@ func TestNewStateFromDisk(t *testing.T) {
 
 		got := s.Balances
 		want := map[db.Account]uint64{"a": 0, "b": 1}
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("State.Balances = %+v, want = %+v", got, want)
-		}
+
+		assertBalance(t, got, want)
 	})
 
 	t.Run("assert add multiple transactions", func(t *testing.T) {
@@ -118,9 +113,8 @@ func TestNewStateFromDisk(t *testing.T) {
 
 		got := s.Balances
 		want := map[db.Account]uint64{"a": 1, "b": 0}
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("State.Balances = %+v, want = %+v", got, want)
-		}
+
+		assertBalance(t, got, want)
 	})
 
 	t.Run("assert add invalid transaction", func(t *testing.T) {
@@ -182,4 +176,12 @@ func composeState(t testing.TB, genData, trxData []byte) *db.State {
 	}
 
 	return s
+}
+
+func assertBalance(t testing.TB, got, want map[db.Account]uint64) {
+	t.Helper()
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("State.Balances = %+v, want %+v", got, want)
+	}
 }

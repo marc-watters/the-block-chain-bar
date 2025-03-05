@@ -9,6 +9,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/afero"
 )
@@ -101,32 +102,37 @@ func (s *State) AddTrx(trx Trx) error {
 	return nil
 }
 
-func (s *State) Persist() (Snapshot, error) {
-	for len(s.trxMempool) > 0 {
-		var trx Trx
-		trx, s.trxMempool = s.trxMempool[0], s.trxMempool[1:]
+func (s *State) Persist() (Hash, error) {
+	block := NewBlock(
+		s.latestBlockHash,
+		uint64(time.Now().Unix()),
+		s.trxMempool,
+	)
 
-		trxJSON, err := json.Marshal(trx)
-		if err != nil {
-			return Snapshot{}, err
-		}
-
-		fmt.Println("Persisting new transaction to disk:")
-		fmt.Printf("\t%s", trxJSON)
-		fmt.Println()
-		_, err = s.db.Write(append(trxJSON, '\n'))
-		if err != nil {
-			return Snapshot{}, err
-		}
-
-		err = s.doSnapshot()
-		if err != nil {
-			return Snapshot{}, err
-		}
-		fmt.Printf("New DB Snapshot: %x\n", s.snapshot)
+	blockHash, err := block.Hash()
+	if err != nil {
+		return Hash{}, err
 	}
 
-	return s.snapshot, nil
+	blockFS := BlockFS{blockHash, block}
+
+	blockFSJON, err := json.Marshal(blockFS)
+	if err != nil {
+		return Hash{}, err
+	}
+
+	fmt.Println()
+	fmt.Println("Persisting new Block to disk:")
+	fmt.Printf("\t%s", blockFSJON)
+	fmt.Println()
+
+	if _, err := s.db.Write(append(blockFSJON, '\n')); err != nil {
+		return Hash{}, err
+	}
+
+	s.latestBlockHash = blockHash
+
+	return s.latestBlockHash, nil
 }
 
 func (s *State) LatestBlockHash() Hash {

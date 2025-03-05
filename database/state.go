@@ -120,8 +120,8 @@ func (s *State) Persist() (Snapshot, error) {
 	return s.snapshot, nil
 }
 
-func (s *State) LatestSnapshot() Snapshot {
-	return s.snapshot
+func (s *State) LatestBlockHash() Hash {
+	return s.latestBlockHash
 }
 
 func (s *State) Close() error {

@@ -71,14 +71,10 @@ func TestNewStateFromDisk(t *testing.T) {
 			To:    db.NewAccount("b"),
 			Value: 1,
 		})
-		if err != nil {
-			t.Fatalf("State.Add() error = %v", err)
-		}
+		checkError(t, "State.Add", err)
 
 		err = s.Persist()
-		if err != nil {
-			t.Fatalf("State.Persist() error = %v", err)
-		}
+		checkError(t, "State.Persist", err)
 
 		got := s.Balances
 		want := map[db.Account]uint64{"a": 0, "b": 1}
@@ -101,15 +97,11 @@ func TestNewStateFromDisk(t *testing.T) {
 
 		for i := range trxs {
 			err := s.Add(trxs[i])
-			if err != nil {
-				t.Fatalf("State.Add() error = %v", err)
-			}
+			checkError(t, "State.Add", err)
 		}
 
 		err := s.Persist()
-		if err != nil {
-			t.Fatalf("State.Persist() error = %v", err)
-		}
+		checkError(t, "State.Persist", err)
 
 		got := s.Balances
 		want := map[db.Account]uint64{"a": 1, "b": 0}
@@ -183,5 +175,11 @@ func assertBalance(t testing.TB, got, want map[db.Account]uint64) {
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("State.Balances = %+v, want %+v", got, want)
+	}
+}
+
+func checkError(t testing.TB, caller string, err error) {
+	if err != nil {
+		t.Fatalf("%s() error = %v", caller, err)
 	}
 }

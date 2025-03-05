@@ -1,6 +1,9 @@
 package node
 
-type Node struct{}
+type (
+	Node  struct{}
+	state interface{}
+)
 
 func New() *Node {
 	return new(Node)

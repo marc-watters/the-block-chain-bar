@@ -36,6 +36,11 @@ func trxAddCmd() *cobra.Command {
 		Use:   "add",
 		Short: "Adds new trx to database",
 		Run: func(cmd *cobra.Command, args []string) {
+			dataDir, err := cmd.Flags().GetString(flagDataDir)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+
 			from, err := cmd.Flags().GetString(flagFrom)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
@@ -58,7 +63,7 @@ func trxAddCmd() *cobra.Command {
 
 			trx := db.NewTrx(db.NewAccount(from), db.NewAccount(to), value, data)
 
-			s, err := db.NewStateFromDisk()
+			s, err := db.NewStateFromDisk(dataDir)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
@@ -80,6 +85,8 @@ func trxAddCmd() *cobra.Command {
 			fmt.Println("trx successfully persisted to the ledger")
 		},
 	}
+
+	addDefaultRequiredFlags(cmd)
 
 	cmd.Flags().String(flagFrom, "", "Which account to send tokens from")
 	if err := cmd.MarkFlagRequired(flagFrom); err != nil {

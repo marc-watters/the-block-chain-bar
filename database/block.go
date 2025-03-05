@@ -1,6 +1,10 @@
 package database
 
-import "encoding/hex"
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+)
 
 type (
 	BlockFS struct {
@@ -30,4 +34,12 @@ func (h *Hash) UnmarshalText(data []byte) error {
 
 func NewBlock(parent Hash, time uint64, trxs []Trx) Block {
 	return Block{BlockHeader{parent, time}, trxs}
+}
+
+func (b Block) Hash() (Hash, error) {
+	blockJSON, err := json.Marshal(b)
+	if err != nil {
+		return Hash{}, err
+	}
+	return sha256.Sum256(blockJSON), nil
 }

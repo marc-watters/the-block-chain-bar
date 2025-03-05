@@ -1,10 +1,12 @@
 package node
 
 type (
-	Node  struct{}
+	Node struct {
+		state state
+	}
 	state interface{}
 )
 
-func New() *Node {
-	return new(Node)
+func New(s state) *Node {
+	return &Node{s}
 }

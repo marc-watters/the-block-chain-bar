@@ -58,3 +58,7 @@ func DirExists(path string) (bool, error) {
 	}
 	return true, err
 }
+
+func WriteEmptyBlocksDBToDisk(path string) error {
+	return AppFS.WriteFile(path, []byte(``), os.ModePerm)
+}

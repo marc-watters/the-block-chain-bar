@@ -2,7 +2,14 @@ package database
 
 import "encoding/hex"
 
-type Hash [32]byte
+type (
+	BlockHeader struct {
+		Parent Hash   `json:"parent"`
+		Time   uint64 `json:"time"`
+	}
+
+	Hash [32]byte
+)
 
 func (h Hash) MarshalText() ([]byte, error) {
 	return []byte(hex.EncodeToString(h[:])), nil

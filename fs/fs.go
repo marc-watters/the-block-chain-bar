@@ -2,6 +2,7 @@ package fs
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/afero"
 )
@@ -26,6 +27,10 @@ var genesisJSON = `
     "andrej": 1000000
   }
 }`
+
+func GetDatabaseDirPath(dataDir string) string {
+	return filepath.Join(dataDir, Dir)
+}
 
 func FileExist(path string) bool {
 	_, err := AppFS.Stat(path)

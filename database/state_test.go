@@ -16,6 +16,7 @@ import (
 var (
 	appFS *afero.Afero
 
+	dir     = "./"
 	genFile = filepath.Join(fs.Dir, fs.GenFile)
 	trxFile = filepath.Join(fs.Dir, fs.TrxFile)
 )
@@ -163,7 +164,7 @@ func composeState(t testing.TB, genData, trxData []byte) *db.State {
 		t.Fatalf("error writing to transaction file: %v", err)
 	}
 
-	s, err := db.NewStateFromDisk()
+	s, err := db.NewStateFromDisk(dir)
 	if err != nil {
 		t.Fatalf("NewStateFromDisk() error = %v", err)
 	}

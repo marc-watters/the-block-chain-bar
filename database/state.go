@@ -7,7 +7,6 @@ import (
 	"io"
 	"maps"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/spf13/afero"
@@ -26,7 +25,12 @@ type (
 	}
 )
 
-func NewStateFromDisk() (*State, error) {
+func NewStateFromDisk(dataDir string) (*State, error) {
+	err := fs.InitDataDirIfNotExists(dataDir)
+	if err != nil {
+		return nil, err
+	}
+
 	s := &State{
 		Balances:        make(map[Account]uint64),
 		latestBlockHash: Hash{},
@@ -34,13 +38,17 @@ func NewStateFromDisk() (*State, error) {
 		db:              nil,
 	}
 
-	g, err := loadGenesis(filepath.Join(fs.Dir, fs.GenFile))
+	g, err := loadGenesis(fs.GetGenesisJSONFilePath(dataDir))
 	if err != nil {
 		return nil, err
 	}
 	maps.Copy(s.Balances, g.Balances)
 
-	s.db, err = fs.AppFS.OpenFile(filepath.Join(fs.Dir, fs.TrxFile), os.O_APPEND|os.O_RDWR, 0o600)
+	s.db, err = fs.AppFS.OpenFile(
+		fs.GetBlocksDBFilePath(dataDir),
+		os.O_APPEND|os.O_RDWR,
+		0o600,
+	)
 	if err != nil {
 		return nil, err
 	}

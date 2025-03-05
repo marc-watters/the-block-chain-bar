@@ -62,3 +62,7 @@ func DirExists(path string) (bool, error) {
 func WriteEmptyBlocksDBToDisk(path string) error {
 	return AppFS.WriteFile(path, []byte(``), os.ModePerm)
 }
+
+func WriteGenesisToDisk(path string) error {
+	return AppFS.WriteFile(path, []byte(genesisJSON), 0o644)
+}

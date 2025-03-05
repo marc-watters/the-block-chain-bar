@@ -29,20 +29,19 @@ type (
 	Snapshot [32]byte
 
 	State struct {
-		Balances map[Account]uint64
-
-		trxMempool []Trx
-		snapshot   Snapshot
-		db         afero.File
+		Balances        map[Account]uint64
+		latestBlockHash Hash
+		trxMempool      []Trx
+		db              afero.File
 	}
 )
 
 func NewStateFromDisk() (*State, error) {
 	s := &State{
-		Balances:   make(map[Account]uint64),
-		trxMempool: make([]Trx, 0),
-		snapshot:   Snapshot{},
-		db:         nil,
+		Balances:        make(map[Account]uint64),
+		latestBlockHash: Hash{},
+		trxMempool:      make([]Trx, 0),
+		db:              nil,
 	}
 
 	g, err := loadGenesis(filepath.Join(Dir, GenFile))

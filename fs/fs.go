@@ -1,6 +1,10 @@
 package fs
 
-import "github.com/spf13/afero"
+import (
+	"os"
+
+	"github.com/spf13/afero"
+)
 
 const (
 	Dir     = "database"
@@ -22,3 +26,11 @@ var genesisJSON = `
     "andrej": 1000000
   }
 }`
+
+func FileExist(path string) bool {
+	_, err := AppFS.Stat(path)
+	if err != nil && os.IsNotExist(err) {
+		return false
+	}
+	return true
+}

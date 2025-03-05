@@ -34,3 +34,14 @@ func FileExist(path string) bool {
 	}
 	return true
 }
+
+func DirExists(path string) (bool, error) {
+	_, err := AppFS.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
+}

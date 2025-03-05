@@ -8,9 +8,9 @@ import (
 
 const (
 	Major  = "0"
-	Minor  = "6"
+	Minor  = "7"
 	Fix    = "0"
-	Verbal = "Implement snapshots"
+	Verbal = "Blockchain"
 )
 
 func versionCmd() *cobra.Command {

@@ -91,6 +91,8 @@ func (s *State) AddBlock(b Block) error {
 	}
 	return nil
 }
+
+func (s *State) AddTrx(trx Trx) error {
 	if err := s.apply(trx); err != nil {
 		return err
 	}

@@ -46,7 +46,7 @@ func TestNewStateFromDisk(t *testing.T) {
 		var got error
 		var want *db.ErrInsufficientBalance
 
-		got = s.Add(db.Trx{
+		got = s.AddTrx(db.Trx{
 			From:  "a",
 			To:    "b",
 			Value: 1,
@@ -66,7 +66,7 @@ func TestNewStateFromDisk(t *testing.T) {
 			/* transaction */ []byte(``),
 		)
 
-		err := s.Add(db.Trx{
+		err := s.AddTrx(db.Trx{
 			From:  db.NewAccount("a"),
 			To:    db.NewAccount("b"),
 			Value: 1,
@@ -96,7 +96,7 @@ func TestNewStateFromDisk(t *testing.T) {
 		}
 
 		for i := range trxs {
-			err := s.Add(trxs[i])
+			err := s.AddTrx(trxs[i])
 			checkError(t, "State.Add", err)
 		}
 
@@ -139,7 +139,7 @@ func TestNewStateFromDisk(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				got := s.Add(tt.trx)
+				got := s.AddTrx(tt.trx)
 				if got == nil {
 					t.Fatalf("State.Add() error = %v, wanted %s", got, tt.want)
 				}

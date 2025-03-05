@@ -65,7 +65,7 @@ func trxAddCmd() *cobra.Command {
 			}
 			defer s.Close()
 
-			err = s.Add(trx)
+			err = s.AddTrx(trx)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)

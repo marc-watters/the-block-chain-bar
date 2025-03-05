@@ -9,7 +9,12 @@ import (
 )
 
 func main() {
-	s, err := db.NewStateFromDisk()
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+
+	s, err := db.NewStateFromDisk(cwd)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

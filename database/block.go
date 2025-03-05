@@ -3,6 +3,10 @@ package database
 import "encoding/hex"
 
 type (
+	BlockFS struct {
+		Key   Hash  `json:"hash"`
+		Value Block `json:"block"`
+	}
 	Block struct {
 		Header BlockHeader `json:"header"`
 		TRXs   []Trx       `json:"payload"`

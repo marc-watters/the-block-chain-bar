@@ -22,7 +22,7 @@ func init() {
 const (
 	Dir     = "database"
 	GenFile = "genesis.json"
-	TrxFile = "trx.db"
+	TrxFile = "block.db"
 )
 
 type (
@@ -65,19 +65,19 @@ func NewStateFromDisk() (*State, error) {
 			return nil, err
 		}
 
-		var trx Trx
-		if err = json.Unmarshal(scanner.Bytes(), &trx); err != nil {
+		var blockFS BlockFS
+		blockFSJSON := scanner.Bytes()
+		err = json.Unmarshal(blockFSJSON, &blockFS)
+		if err != nil {
 			return nil, err
 		}
 
-		if err = s.apply(trx); err != nil {
+		err = s.applyBlock(blockFS.Value)
+		if err != nil {
 			return nil, err
 		}
-	}
 
-	err = s.doSnapshot()
-	if err != nil {
-		return nil, err
+		s.latestBlockHash = blockFS.Key
 	}
 
 	return s, nil

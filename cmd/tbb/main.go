@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const flagDataDir = "datadir"
+
 func main() {
 	tbbCmd := &cobra.Command{
 		Use:   "tbb",
@@ -27,6 +29,14 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+}
+
+func addDefaultRequiredFlags(cmd *cobra.Command) {
+	cmd.Flags().String(flagDataDir, "", "Absolute path to the node data directory where the database will be stored")
+	err := cmd.MarkFlagRequired(flagDataDir)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 	}
 }
 

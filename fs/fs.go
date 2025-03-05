@@ -28,6 +28,26 @@ var genesisJSON = `
   }
 }`
 
+func InitDataDirIfNotExists(dataDir string) error {
+	if FileExist(GetGenesisJSONFilePath(dataDir)) {
+		return nil
+	}
+
+	if err := AppFS.MkdirAll(GetDatabaseDirPath(dataDir), os.ModePerm); err != nil {
+		return err
+	}
+
+	if err := WriteGenesisToDisk(GetGenesisJSONFilePath(dataDir)); err != nil {
+		return err
+	}
+
+	if err := WriteEmptyBlocksDBToDisk(GetBlocksDBFilePath(dataDir)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func GetDatabaseDirPath(dataDir string) string {
 	return filepath.Join(dataDir, Dir)
 }

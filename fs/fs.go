@@ -32,6 +32,10 @@ func GetDatabaseDirPath(dataDir string) string {
 	return filepath.Join(dataDir, Dir)
 }
 
+func GetGenesisJSONFilePath(dataDir string) string {
+	return filepath.Join(GetDatabaseDirPath(dataDir), GenFile)
+}
+
 func FileExist(path string) bool {
 	_, err := AppFS.Stat(path)
 	if err != nil && os.IsNotExist(err) {

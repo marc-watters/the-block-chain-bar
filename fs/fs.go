@@ -36,6 +36,10 @@ func GetGenesisJSONFilePath(dataDir string) string {
 	return filepath.Join(GetDatabaseDirPath(dataDir), GenFile)
 }
 
+func GetBlocksDBFilePath(dataDir string) string {
+	return filepath.Join(GetDatabaseDirPath(dataDir), TrxFile)
+}
+
 func FileExist(path string) bool {
 	_, err := AppFS.Stat(path)
 	if err != nil && os.IsNotExist(err) {

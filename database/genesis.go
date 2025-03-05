@@ -1,13 +1,17 @@
 package database
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/marc-watters/the-block-chain-bar/v2/fs"
+)
 
 type genesis struct {
 	Balances map[Account]uint64 `json:"balances"`
 }
 
 func loadGenesis(path string) (genesis, error) {
-	content, err := AppFS.ReadFile(path)
+	content, err := fs.AppFS.ReadFile(path)
 	if err != nil {
 		return genesis{}, err
 	}

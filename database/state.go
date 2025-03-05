@@ -11,18 +11,8 @@ import (
 	"time"
 
 	"github.com/spf13/afero"
-)
 
-var AppFS *afero.Afero
-
-func init() {
-	AppFS = &afero.Afero{Fs: afero.NewOsFs()}
-}
-
-const (
-	Dir     = "database"
-	GenFile = "genesis.json"
-	TrxFile = "block.db"
+	"github.com/marc-watters/the-block-chain-bar/v2/fs"
 )
 
 type (
@@ -44,13 +34,13 @@ func NewStateFromDisk() (*State, error) {
 		db:              nil,
 	}
 
-	g, err := loadGenesis(filepath.Join(Dir, GenFile))
+	g, err := loadGenesis(filepath.Join(fs.Dir, fs.GenFile))
 	if err != nil {
 		return nil, err
 	}
 	maps.Copy(s.Balances, g.Balances)
 
-	s.db, err = AppFS.OpenFile(filepath.Join(Dir, TrxFile), os.O_APPEND|os.O_RDWR, 0o600)
+	s.db, err = fs.AppFS.OpenFile(filepath.Join(fs.Dir, fs.TrxFile), os.O_APPEND|os.O_RDWR, 0o600)
 	if err != nil {
 		return nil, err
 	}

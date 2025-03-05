@@ -10,18 +10,19 @@ import (
 	"github.com/spf13/afero"
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
+	"github.com/marc-watters/the-block-chain-bar/v2/fs"
 )
 
 var (
 	appFS *afero.Afero
 
-	genFile = filepath.Join(db.Dir, db.GenFile)
-	trxFile = filepath.Join(db.Dir, db.TrxFile)
+	genFile = filepath.Join(fs.Dir, fs.GenFile)
+	trxFile = filepath.Join(fs.Dir, fs.TrxFile)
 )
 
 func init() {
-	db.AppFS = &afero.Afero{Fs: afero.NewMemMapFs()}
-	appFS = db.AppFS
+	fs.AppFS = &afero.Afero{Fs: afero.NewMemMapFs()}
+	appFS = fs.AppFS
 }
 
 func TestNewStateFromDisk(t *testing.T) {

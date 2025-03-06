@@ -17,6 +17,11 @@ type (
 		LatestBlockHash() db.Hash
 		Balances() map[db.Account]uint64
 	}
+
+	BalanceRes struct {
+		Hash     db.Hash               `json:"block_hash"`
+		Balances map[db.Account]uint64 `json:"balances"`
+	}
 )
 
 func New(s state) *Node {
@@ -33,10 +38,7 @@ func (n *Node) Run() error {
 }
 
 func (n *Node) GetBalances(w http.ResponseWriter, r *http.Request) {
-	res := struct {
-		Hash     db.Hash               `json:"block_hash"`
-		Balances map[db.Account]uint64 `json:"balances"`
-	}{
+	res := BalanceRes{
 		n.state.LatestBlockHash(),
 		n.state.Balances(),
 	}

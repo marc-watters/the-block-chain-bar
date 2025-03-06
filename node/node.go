@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/marc-watters/the-block-chain-bar/v2/database"
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 )
 
@@ -34,6 +33,9 @@ type (
 		To    db.Account `json:"to"`
 		Value uint64     `json:"value"`
 		Data  string     `json:"data"`
+	}
+	TrxPostRes struct {
+		Hash db.Hash `json:"block_hash"`
 	}
 )
 
@@ -80,11 +82,7 @@ func (n *Node) PostTrx(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := struct {
-		Hash database.Hash `json:"block_hash"`
-	}{
-		hash,
-	}
+	res := TrxPostRes{hash}
 
 	writeRes(w, res)
 }

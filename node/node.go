@@ -50,7 +50,7 @@ func (n *Node) GetBalances(w http.ResponseWriter, r *http.Request) {
 func writeRes(w http.ResponseWriter, data any) {
 	dataJSON, err := json.Marshal(data)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeErr(w, err)
 		return
 	}
 
@@ -58,4 +58,20 @@ func writeRes(w http.ResponseWriter, data any) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
+}
+
+func writeErr(w http.ResponseWriter, err error) {
+	errRes := struct {
+		Error error
+	}{
+		err,
+	}
+
+	errJSON, err := json.Marshal(errRes.Error)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	http.Error(w, string(errJSON), http.StatusInternalServerError)
 }

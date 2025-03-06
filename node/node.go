@@ -62,21 +62,13 @@ func (n *Node) PostTrx(w http.ResponseWriter, r *http.Request) {
 		Data  string     `json:"data"`
 	}{}
 
-	reqBody, err := io.ReadAll(r.Body)
-	if err != nil {
+	if err := readReq(r, &req); err != nil {
 		writeErr(w, err)
-		return
-	}
-	defer r.Body.Close()
-
-	if err = json.Unmarshal(reqBody, &req); err != nil {
-		writeErr(w, err)
-		return
 	}
 
 	trx := db.NewTrx(req.From, req.To, req.Value, req.Data)
 
-	if err = n.AddTrx(trx); err != nil {
+	if err := n.AddTrx(trx); err != nil {
 		writeErr(w, err)
 		return
 	}
@@ -117,4 +109,18 @@ func writeErr(w http.ResponseWriter, err error) {
 	}
 
 	http.Error(w, string(errJSON), http.StatusInternalServerError)
+}
+
+func readReq(r *http.Request, reqBody any) error {
+	reqBodyJSON, err := io.ReadAll(r.Body)
+	if err != nil {
+		return fmt.Errorf("unable to read request body: %v", err)
+	}
+	defer r.Body.Close()
+
+	if err := json.Unmarshal(reqBodyJSON, &reqBody); err != nil {
+		return fmt.Errorf("unable to unmarshal request body: %v", err)
+	}
+
+	return nil
 }

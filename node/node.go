@@ -29,6 +29,12 @@ type (
 	ErrRes struct {
 		Error string `json:"error"`
 	}
+	TrxPostReq struct {
+		From  db.Account `json:"from"`
+		To    db.Account `json:"to"`
+		Value uint64     `json:"value"`
+		Data  string     `json:"data"`
+	}
 )
 
 func New(s state) *Node {
@@ -55,15 +61,10 @@ func (n *Node) GetBalances(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n *Node) PostTrx(w http.ResponseWriter, r *http.Request) {
-	req := struct {
-		From  db.Account `json:"from"`
-		To    db.Account `json:"to"`
-		Value uint64     `json:"value"`
-		Data  string     `json:"data"`
-	}{}
-
+	var req TrxPostReq
 	if err := readReq(r, &req); err != nil {
 		writeErr(w, err)
+		return
 	}
 
 	trx := db.NewTrx(req.From, req.To, req.Value, req.Data)

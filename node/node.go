@@ -49,6 +49,7 @@ func (n *Node) Run() error {
 	mx := http.NewServeMux()
 
 	mx.HandleFunc("/balances/list", n.GetBalances)
+	mx.HandleFunc("/trx/add", n.PostTrx)
 
 	fmt.Printf("Listening on %s:%d", "127.0.0.1\n", port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), mx)

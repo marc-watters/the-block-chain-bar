@@ -22,6 +22,7 @@ func main() {
 	tbbCmd.AddCommand(
 		balancesCmd(),
 		trxCmd(),
+		runCmd(),
 		versionCmd(),
 	)
 

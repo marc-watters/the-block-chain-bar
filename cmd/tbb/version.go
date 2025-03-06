@@ -8,9 +8,9 @@ import (
 
 const (
 	Major  = "0"
-	Minor  = "8"
+	Minor  = "9"
 	Fix    = "0"
-	Verbal = "Flexible data directory"
+	Verbal = "HTTP API"
 )
 
 func versionCmd() *cobra.Command {

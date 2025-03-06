@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
@@ -17,6 +18,7 @@ import (
 type mockState struct {
 	latestBlockHash db.Hash
 	balances        map[db.Account]uint64
+	trxMempool      []db.Trx
 }
 
 func newMockState() *mockState {
@@ -41,6 +43,19 @@ func (ms *mockState) LatestBlockHash() db.Hash {
 
 func (ms *mockState) Balances() map[db.Account]uint64 {
 	return ms.balances
+}
+
+func (ms *mockState) AddTrx(trx db.Trx) error {
+	ms.trxMempool = append(ms.trxMempool, trx)
+	return nil
+}
+
+func (ms *mockState) Persist() (db.Hash, error) {
+	if _, err := rand.Read(ms.latestBlockHash[:]); err != nil {
+		fmt.Printf("error generating random hash: %v\n", err)
+		os.Exit(1)
+	}
+	return ms.latestBlockHash, nil
 }
 
 func TestNode(t *testing.T) {
@@ -68,6 +83,31 @@ func TestNode(t *testing.T) {
 
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("GetBalances() = %+v, want %+v", got, want)
+		}
+	})
+
+	t.Run("post transaction", func(t *testing.T) {
+		body := strings.NewReader(`{"from":"A","to":"B","value":1,"data":""}`)
+		req, _ := http.NewRequest(http.MethodPost, "/tx/add", body)
+		res := httptest.NewRecorder()
+
+		n := &Node{newMockState()}
+		n.PostTrx(res, req)
+
+		resBody, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatalf("PostTrx() read error: %v", err)
+		}
+
+		var got TrxPostRes
+		if err := json.Unmarshal(resBody, &got); err != nil {
+			t.Fatalf("PostTrx() unmarshal error: %v", err)
+		}
+
+		want := TrxPostRes{n.LatestBlockHash()}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("PostTrx() = %+v, want %+v", got, want)
 		}
 	})
 }

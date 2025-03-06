@@ -13,6 +13,7 @@ type (
 	}
 	state interface {
 		LatestBlockHash() db.Hash
+		Balances() map[db.Account]uint64
 	}
 )
 

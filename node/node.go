@@ -3,13 +3,17 @@ package node
 import (
 	"fmt"
 	"net/http"
+
+	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 )
 
 type (
 	Node struct {
 		state state
 	}
-	state interface{}
+	state interface {
+		LatestBlockHash() db.Hash
+	}
 )
 
 func New(s state) *Node {

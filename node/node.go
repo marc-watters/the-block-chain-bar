@@ -3,9 +3,11 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 
+	"github.com/marc-watters/the-block-chain-bar/v2/database"
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 )
 
@@ -14,6 +16,8 @@ type (
 		state state
 	}
 	state interface {
+		AddTrx(db.Trx) error
+		Persist() (db.Hash, error)
 		LatestBlockHash() db.Hash
 		Balances() map[db.Account]uint64
 	}
@@ -47,6 +51,48 @@ func (n *Node) GetBalances(w http.ResponseWriter, r *http.Request) {
 		n.state.LatestBlockHash(),
 		n.state.Balances(),
 	}
+	writeRes(w, res)
+}
+
+func (n *Node) PostTrx(w http.ResponseWriter, r *http.Request) {
+	req := struct {
+		From  db.Account `json:"from"`
+		To    db.Account `json:"to"`
+		Value uint64     `json:"value"`
+		Data  string     `json:"data"`
+	}{}
+
+	reqBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+	defer r.Body.Close()
+
+	if err = json.Unmarshal(reqBody, &req); err != nil {
+		writeErr(w, err)
+		return
+	}
+
+	trx := db.NewTrx(req.From, req.To, req.Value, req.Data)
+
+	if err = n.AddTrx(trx); err != nil {
+		writeErr(w, err)
+		return
+	}
+
+	hash, err := n.Persist()
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+
+	res := struct {
+		Hash database.Hash `json:"block_hash"`
+	}{
+		hash,
+	}
+
 	writeRes(w, res)
 }
 

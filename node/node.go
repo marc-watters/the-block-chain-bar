@@ -22,6 +22,9 @@ type (
 		Hash     db.Hash               `json:"block_hash"`
 		Balances map[db.Account]uint64 `json:"balances"`
 	}
+	ErrRes struct {
+		Error string `json:"error"`
+	}
 )
 
 func New(s state) *Node {
@@ -61,13 +64,7 @@ func writeRes(w http.ResponseWriter, data any) {
 }
 
 func writeErr(w http.ResponseWriter, err error) {
-	errRes := struct {
-		Error error
-	}{
-		err,
-	}
-
-	errJSON, err := json.Marshal(errRes.Error)
+	errJSON, err := json.Marshal(ErrRes{err.Error()})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return

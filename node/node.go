@@ -44,15 +44,18 @@ func (n *Node) GetBalances(w http.ResponseWriter, r *http.Request) {
 		n.state.LatestBlockHash(),
 		n.state.Balances(),
 	}
+	writeRes(w, res)
+}
 
-	resJSON, err := json.Marshal(res)
+func writeRes(w http.ResponseWriter, data any) {
+	dataJSON, err := json.Marshal(data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if _, err := w.Write(resJSON); err != nil {
-		fmt.Fprintf(os.Stderr, "Node.GetBalances() write error: %v", err)
+	if _, err := w.Write(dataJSON); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		return
 	}
 }

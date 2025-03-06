@@ -72,12 +72,12 @@ func (n *Node) PostTrx(w http.ResponseWriter, r *http.Request) {
 
 	trx := db.NewTrx(req.From, req.To, req.Value, req.Data)
 
-	if err := n.AddTrx(trx); err != nil {
+	if err := n.state.AddTrx(trx); err != nil {
 		writeErr(w, err)
 		return
 	}
 
-	hash, err := n.Persist()
+	hash, err := n.state.Persist()
 	if err != nil {
 		writeErr(w, err)
 		return

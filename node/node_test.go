@@ -77,8 +77,8 @@ func TestNode(t *testing.T) {
 		}
 
 		want := BalanceRes{
-			n.LatestBlockHash(),
-			n.Balances(),
+			n.state.LatestBlockHash(),
+			n.state.Balances(),
 		}
 
 		if !reflect.DeepEqual(got, want) {
@@ -104,7 +104,7 @@ func TestNode(t *testing.T) {
 			t.Fatalf("PostTrx() unmarshal error: %v", err)
 		}
 
-		want := TrxPostRes{n.LatestBlockHash()}
+		want := TrxPostRes{n.state.LatestBlockHash()}
 
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("PostTrx() = %+v, want %+v", got, want)

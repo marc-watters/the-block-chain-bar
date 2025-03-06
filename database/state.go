@@ -14,16 +14,12 @@ import (
 	"github.com/marc-watters/the-block-chain-bar/v2/fs"
 )
 
-type (
-	Snapshot [32]byte
-
-	State struct {
-		Balances        map[Account]uint64
-		latestBlockHash Hash
-		trxMempool      []Trx
-		db              afero.File
-	}
-)
+type State struct {
+	balances        map[Account]uint64
+	latestBlockHash Hash
+	trxMempool      []Trx
+	db              afero.File
+}
 
 func NewStateFromDisk(dataDir string) (*State, error) {
 	err := fs.InitDataDirIfNotExists(dataDir)
@@ -32,7 +28,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 	}
 
 	s := &State{
-		Balances:        make(map[Account]uint64),
+		balances:        make(map[Account]uint64),
 		latestBlockHash: Hash{},
 		trxMempool:      make([]Trx, 0),
 		db:              nil,
@@ -42,7 +38,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 	if err != nil {
 		return nil, err
 	}
-	maps.Copy(s.Balances, g.Balances)
+	maps.Copy(s.balances, g.Balances)
 
 	s.db, err = fs.AppFS.OpenFile(
 		fs.GetBlocksDBFilePath(dataDir),
@@ -136,6 +132,10 @@ func (s *State) LatestBlockHash() Hash {
 	return s.latestBlockHash
 }
 
+func (s *State) Balances() map[Account]uint64 {
+	return s.balances
+}
+
 func (s *State) Close() error {
 	return s.db.Close()
 }
@@ -161,16 +161,16 @@ func (s *State) apply(trx Trx) error {
 	}
 
 	if trx.IsReward() {
-		s.Balances[trx.To] += trx.Value
+		s.balances[trx.To] += trx.Value
 		return nil
 	}
 
-	if trx.Value > s.Balances[trx.From] {
+	if trx.Value > s.balances[trx.From] {
 		return new(ErrInsufficientBalance)
 	}
 
-	s.Balances[trx.From] -= trx.Value
-	s.Balances[trx.To] += trx.Value
+	s.balances[trx.From] -= trx.Value
+	s.balances[trx.To] += trx.Value
 
 	return nil
 }

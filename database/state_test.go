@@ -33,7 +33,7 @@ func TestNewStateFromDisk(t *testing.T) {
 			/* transaction */ []byte(``),
 		)
 
-		got := s.Balances
+		got := s.Balances()
 		want := map[db.Account]uint64{"a": 1, "b": 0}
 
 		assertBalance(t, got, want)
@@ -78,7 +78,7 @@ func TestNewStateFromDisk(t *testing.T) {
 		_, err = s.Persist()
 		checkError(t, "State.Persist", err)
 
-		got := s.Balances
+		got := s.Balances()
 		want := map[db.Account]uint64{"a": 0, "b": 1}
 
 		assertBalance(t, got, want)
@@ -105,7 +105,7 @@ func TestNewStateFromDisk(t *testing.T) {
 		_, err := s.Persist()
 		checkError(t, "State.Persist", err)
 
-		got := s.Balances
+		got := s.Balances()
 		want := map[db.Account]uint64{"a": 1, "b": 0}
 
 		assertBalance(t, got, want)

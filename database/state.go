@@ -136,6 +136,10 @@ func (s *State) Persist() (Hash, error) {
 	return s.latestBlockHash, nil
 }
 
+func (s *State) LatestBlock() Block {
+	return s.latestBlock
+}
+
 func (s *State) LatestBlockHash() Hash {
 	return s.latestBlockHash
 }

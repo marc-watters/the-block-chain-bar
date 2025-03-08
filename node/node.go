@@ -17,6 +17,7 @@ type (
 	state interface {
 		AddTrx(db.Trx) error
 		Persist() (db.Hash, error)
+		LatestBlock() db.Block
 		LatestBlockHash() db.Hash
 		Balances() map[db.Account]uint64
 	}

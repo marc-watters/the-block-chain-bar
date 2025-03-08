@@ -38,6 +38,10 @@ func newMockState() *mockState {
 	return ms
 }
 
+func (ms *mockState) LatestBlock() db.Block {
+	return ms.latestBlock
+}
+
 func (ms *mockState) LatestBlockHash() db.Hash {
 	return ms.latestBlockHash
 }

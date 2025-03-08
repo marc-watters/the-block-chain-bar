@@ -19,6 +19,7 @@ type State struct {
 	balances        map[Account]uint64
 	latestBlock     Block
 	latestBlockHash Hash
+	hasGenesisBlock bool
 	trxMempool      []Trx
 	dataDir         string
 	db              afero.File
@@ -36,6 +37,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 		balances:        make(map[Account]uint64),
 		latestBlock:     Block{},
 		latestBlockHash: Hash{},
+		hasGenesisBlock: false,
 		trxMempool:      make([]Trx, 0),
 		dataDir:         dataDir,
 		db:              nil,
@@ -83,6 +85,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 
 		s.latestBlock = blockFS.Value
 		s.latestBlockHash = blockFS.Key
+		s.hasGenesisBlock = true
 	}
 
 	return s, nil
@@ -129,6 +132,7 @@ func (s *State) AddBlock(b Block) (Hash, error) {
 	s.balances = pendingState.balances
 	s.latestBlockHash = blockHash
 	s.latestBlock = b
+	s.hasGenesisBlock = true
 
 	return blockHash, nil
 }
@@ -203,6 +207,7 @@ func (s *State) copy() State {
 	c := State{}
 	c.latestBlock = s.latestBlock
 	c.latestBlockHash = s.latestBlockHash
+	c.hasGenesisBlock = s.hasGenesisBlock
 	c.trxMempool = make([]Trx, len(s.trxMempool))
 	c.balances = make(map[Account]uint64)
 
@@ -216,16 +221,18 @@ func (s *State) copy() State {
 func applyBlock(b Block, s State) error {
 	nextExpectedBlockHeight := s.latestBlock.Header.Height + 1
 
-	if b.Header.Height != nextExpectedBlockHeight {
+	if s.hasGenesisBlock && b.Header.Height != nextExpectedBlockHeight {
 		return fmt.Errorf("next expected block height must be '%d' not '%d'",
 			nextExpectedBlockHeight,
 			b.Header.Height,
 		)
 	}
 
-	if s.latestBlock.Header.Height > 0 && !reflect.DeepEqual(
-		b.Header.Parent, s.latestBlockHash,
-	) {
+	if s.hasGenesisBlock &&
+		s.latestBlock.Header.Height > 0 &&
+		!reflect.DeepEqual(
+			b.Header.Parent, s.latestBlockHash,
+		) {
 		return fmt.Errorf("next block parent hash must be '%x' not '%x'",
 			s.latestBlockHash, b.Header.Parent,
 		)

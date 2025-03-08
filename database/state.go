@@ -7,6 +7,7 @@ import (
 	"io"
 	"maps"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/spf13/afero"
@@ -166,13 +167,25 @@ func (s *State) Close() error {
 	return s.db.Close()
 }
 
-func (s *State) applyBlock(b Block) error {
-	for _, trx := range b.TRXs {
-		if err := s.apply(trx); err != nil {
-			return err
-		}
+func applyBlock(b Block, s State) error {
+	nextExpectedBlockHeight := s.latestBlock.Header.Height + 1
+
+	if b.Header.Height != nextExpectedBlockHeight {
+		return fmt.Errorf("next expected block height must be '%d' not '%d'",
+			nextExpectedBlockHeight,
+			b.Header.Height,
+		)
 	}
-	return nil
+
+	if s.latestBlock.Header.Height > 0 && !reflect.DeepEqual(
+		b.Header.Parent, s.latestBlockHash,
+	) {
+		return fmt.Errorf("next block parent hash must be '%x' not '%x'",
+			s.latestBlockHash, b.Header.Parent,
+		)
+	}
+
+	return applyTRXs(b.TRXs, &s)
 }
 
 func applyTrx(trx Trx, s *State) error {

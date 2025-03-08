@@ -171,6 +171,15 @@ func (n *Node) deletePeer(p PeerNode) {
 	delete(n.knownPeers, p.Address())
 }
 
+func (n *Node) isKnownPeer(p PeerNode) bool {
+	if p.IP == n.ip && p.Port == n.port {
+		return true
+	}
+	_, isKnownPeer := n.knownPeers[p.Address()]
+
+	return isKnownPeer
+}
+
 func (pn PeerNode) Address() string {
 	return fmt.Sprintf("%s:%d", pn.IP, pn.Port)
 }

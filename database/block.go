@@ -1,6 +1,7 @@
 package database
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -35,6 +36,10 @@ func (h *Hash) UnmarshalText(data []byte) error {
 
 func (h Hash) Hex() string {
 	return hex.EncodeToString(h[:])
+}
+
+func (h Hash) IsEmpty() bool {
+	return bytes.Equal(h[:], []byte(new(Hash)[:]))
 }
 
 func NewBlock(parent Hash, height uint64, time uint64, trxs []Trx) Block {

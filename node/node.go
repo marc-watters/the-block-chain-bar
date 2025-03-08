@@ -102,6 +102,25 @@ func (n *Node) Status(w http.ResponseWriter, r *http.Request) {
 	writeRes(w, res)
 }
 
+func (n *Node) Sync(w http.ResponseWriter, r *http.Request) {
+	reqHash := r.URL.Query().Get(endpointSyncQueryKeyFromBlock)
+
+	var hash db.Hash
+	err := hash.UnmarshalText([]byte(reqHash))
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+
+	blocks, err := db.GetBlocksAfter(hash, n.state.DataDir())
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+
+	writeRes(w, SyncRes{Blocks: blocks})
+}
+
 func (pn PeerNode) Address() string {
 	return fmt.Sprintf("%s:%d", pn.IP, pn.Port)
 }

@@ -36,11 +36,6 @@ func trxAddCmd() *cobra.Command {
 		Use:   "add",
 		Short: "Adds new trx to database",
 		Run: func(cmd *cobra.Command, args []string) {
-			dataDir, err := cmd.Flags().GetString(flagDataDir)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-			}
-
 			from, err := cmd.Flags().GetString(flagFrom)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
@@ -63,7 +58,7 @@ func trxAddCmd() *cobra.Command {
 
 			trx := db.NewTrx(db.NewAccount(from), db.NewAccount(to), value, data)
 
-			s, err := db.NewStateFromDisk(dataDir)
+			s, err := db.NewStateFromDisk(getDataDirFromCmd(cmd))
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)

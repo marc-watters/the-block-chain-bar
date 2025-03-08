@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/marc-watters/the-block-chain-bar/v2/fs"
 	"github.com/spf13/cobra"
 )
 
@@ -43,6 +44,12 @@ func addDefaultRequiredFlags(cmd *cobra.Command) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
+}
+
+func getDataDirFromCmd(cmd *cobra.Command) string {
+	dataDir, _ := cmd.Flags().GetString(flagDataDir)
+
+	return fs.ExpandPath(dataDir)
 }
 
 func incorrectUsage() error {

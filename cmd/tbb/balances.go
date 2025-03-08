@@ -6,8 +6,9 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/marc-watters/the-block-chain-bar/v2/database"
 	"github.com/spf13/cobra"
+
+	"github.com/marc-watters/the-block-chain-bar/v2/database"
 )
 
 func balancesCmd() *cobra.Command {
@@ -30,12 +31,7 @@ func balancesListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "Lists all balances",
 		Run: func(cmd *cobra.Command, args []string) {
-			dataDir, err := cmd.Flags().GetString(flagDataDir)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-			}
-
-			s, err := database.NewStateFromDisk(dataDir)
+			s, err := database.NewStateFromDisk(getDataDirFromCmd(cmd))
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)

@@ -101,7 +101,7 @@ func (s *State) AddBlock(b Block) error {
 }
 
 func (s *State) AddTrx(trx Trx) error {
-	if err := s.apply(trx); err != nil {
+	if err := applyTrx(trx, s); err != nil {
 		return err
 	}
 	s.trxMempool = append(s.trxMempool, trx)
@@ -175,7 +175,7 @@ func (s *State) applyBlock(b Block) error {
 	return nil
 }
 
-func (s *State) apply(trx Trx) error {
+func applyTrx(trx Trx, s *State) error {
 	if trx.From == "" {
 		return NewInvalidTransaction("From")
 	}

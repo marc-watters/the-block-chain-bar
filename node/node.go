@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
@@ -19,6 +20,9 @@ const (
 	endpointStatus                = "/node/status"
 	endpointSync                  = "/node/sync"
 	endpointSyncQueryKeyFromBlock = "fromBlock"
+	endpointAddPeer               = "/node/peer"
+	endpointAddPeerQueryKeyIP     = "ip"
+	endpointAddPeerQueryKeyPort   = "port"
 )
 
 type (
@@ -65,6 +69,7 @@ func (n *Node) Run() error {
 	mx.HandleFunc(endpointPostTrx, n.PostTrx)
 	mx.HandleFunc(endpointStatus, n.Status)
 	mx.HandleFunc(endpointSync, n.Sync)
+	mx.HandleFunc(endpointAddPeer, n.AddPeer)
 
 	go func() {
 		if err := n.sync(context.Background()); err != nil {
@@ -137,6 +142,25 @@ func (n *Node) Sync(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeRes(w, SyncRes{Blocks: blocks})
+}
+
+func (n *Node) AddPeer(w http.ResponseWriter, r *http.Request) {
+	peerIP := r.URL.Query().Get(endpointAddPeerQueryKeyIP)
+	peerPortRaw := r.URL.Query().Get(endpointAddPeerQueryKeyPort)
+
+	peerPort, err := strconv.ParseUint(peerPortRaw, 10, 32)
+	if err != nil {
+		writeRes(w, AddPeerRes{false, err.Error()})
+		return
+	}
+
+	peer := NewPeerNode(peerIP, peerPort, false, true)
+
+	n.addPeer(peer)
+
+	fmt.Println("Peer", peer.Address(), "was added to known peers")
+
+	writeRes(w, AddPeerRes{true, ""})
 }
 
 func (n *Node) addPeer(p PeerNode) {

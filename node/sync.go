@@ -1,9 +1,27 @@
 package node
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"time"
 )
+
+func (n *Node) sync(ctx context.Context) error {
+	ticker := time.NewTicker(45 * time.Second)
+
+	for {
+		select {
+		case <-ticker.C:
+			fmt.Println("Searching for new Peers and Blocks...")
+
+			n.fetchNewBlocksAndPeers()
+
+		case <-ctx.Done():
+			ticker.Stop()
+		}
+	}
+}
 
 func (n *Node) fetchNewBlocksAndPeers() {
 	for _, knownPeer := range n.knownPeers {

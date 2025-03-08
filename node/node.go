@@ -24,6 +24,12 @@ type (
 		LatestBlockHash() db.Hash
 		Balances() map[db.Account]uint64
 	}
+	PeerNode struct {
+		IP         string `json:"ip"`
+		Port       uint64 `json:"port"`
+		IsBoostrap bool   `json:"is_bootstrap"`
+		IsActive   bool   `json:"is_active"`
+	}
 
 	BalanceRes struct {
 		Hash     db.Hash               `json:"block_hash"`
@@ -42,24 +48,29 @@ type (
 		Hash db.Hash `json:"block_hash"`
 	}
 	StatusRes struct {
-		Hash   db.Hash `json:"block_hash"`
-		Height uint64  `json:"block_height"`
+		Hash       db.Hash             `json:"block_hash"`
+		Height     uint64              `json:"block_height"`
+		KnownPeers map[string]PeerNode `json:"peers_known"`
 	}
 )
 
-func New(s state) *Node {
-	return &Node{s}
+func New(s state, port uint64) *Node {
+	return &Node{s, port}
 }
 
-func (n *Node) Run(port uint64) error {
+func NewPeerNode(ip string, port uint64, isBootstrap bool, isActive bool) PeerNode {
+	return PeerNode{ip, port, isBootstrap, isActive}
+}
+
+func (n *Node) Run() error {
 	mx := http.NewServeMux()
 
 	mx.HandleFunc("/balances/list", n.GetBalances)
 	mx.HandleFunc("/trx/add", n.PostTrx)
 	mx.HandleFunc("/node/status", n.Status)
 
-	fmt.Printf("Listening on %s:%d", "127.0.0.1\n", port)
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), mx)
+	fmt.Printf("Listening on %s:%d", "127.0.0.1\n", n.port)
+	return http.ListenAndServe(fmt.Sprintf(":%d", n.port), mx)
 }
 
 func (n *Node) GetBalances(w http.ResponseWriter, r *http.Request) {

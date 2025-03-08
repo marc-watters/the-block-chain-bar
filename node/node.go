@@ -10,6 +10,8 @@ import (
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 )
 
+const DefaultHTTPort = 8080
+
 type (
 	Node struct {
 		state state

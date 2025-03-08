@@ -54,6 +54,18 @@ func (ms *mockState) Balances() map[db.Account]uint64 {
 	return ms.balances
 }
 
+func (ms *mockState) AddBlock(b db.Block) (db.Hash, error) {
+	hash, err := b.Hash()
+	if err != nil {
+		return db.Hash{}, nil
+	}
+
+	ms.latestBlockHash = hash
+	ms.latestBlock = b
+
+	return hash, nil
+}
+
 func (ms *mockState) AddTrx(trx db.Trx) error {
 	ms.trxMempool = append(ms.trxMempool, trx)
 	return nil

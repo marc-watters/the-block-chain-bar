@@ -31,13 +31,7 @@ func main() {
 		},
 	)
 
-	err = s.AddBlock(block0)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	block0Hash, err := s.Persist()
+	block0Hash, err := s.AddBlock(block0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -57,14 +51,11 @@ func main() {
 		},
 	)
 
-	err = s.AddBlock(block1)
+	block1Hash, err := s.AddBlock(block1)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	_, err = s.Persist()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+
+	fmt.Printf("Final block hash: %x", block1Hash)
 }

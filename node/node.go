@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 )
@@ -27,6 +28,7 @@ type (
 		knownPeers map[string]PeerNode
 	}
 	state interface {
+		AddBlock(db.Block) (db.Hash, error)
 		AddTrx(db.Trx) error
 		Persist() (db.Hash, error)
 		LatestBlock() db.Block
@@ -88,12 +90,14 @@ func (n *Node) PostTrx(w http.ResponseWriter, r *http.Request) {
 
 	trx := db.NewTrx(req.From, req.To, req.Value, req.Data)
 
-	if err := n.state.AddTrx(trx); err != nil {
-		writeErr(w, err)
-		return
-	}
+	block := db.NewBlock(
+		n.state.LatestBlockHash(),
+		n.state.LatestBlock().Header.Height+1,
+		uint64(time.Now().Unix()),
+		[]db.Trx{trx},
+	)
 
-	hash, err := n.state.Persist()
+	hash, err := n.state.AddBlock(block)
 	if err != nil {
 		writeErr(w, err)
 		return

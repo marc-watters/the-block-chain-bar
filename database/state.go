@@ -92,13 +92,36 @@ func (s *State) DataDir() string {
 	return s.dataDir
 }
 
-func (s *State) AddBlock(b Block) error {
-	for _, trx := range b.TRXs {
-		if err := s.AddTrx(trx); err != nil {
-			return err
-		}
+func (s *State) AddBlock(b Block) (Hash, error) {
+	pendingState := s.copy()
+
+	if err := applyBlock(b, pendingState); err != nil {
+		return Hash{}, err
 	}
-	return nil
+
+	blockHash, err := b.Hash()
+	if err != nil {
+		return Hash{}, err
+	}
+
+	blockFS := BlockFS{blockHash, b}
+
+	blockFSJSON, err := json.Marshal(blockFS)
+	if err != nil {
+		return Hash{}, err
+	}
+
+	fmt.Println("Persisting new Block to disk:")
+	fmt.Printf("\t%s\n", blockFSJSON)
+	if _, err := s.db.Write(append(blockFSJSON, '\n')); err != nil {
+		return Hash{}, err
+	}
+
+	s.balances = pendingState.balances
+	s.latestBlockHash = blockHash
+	s.latestBlock = b
+
+	return blockHash, nil
 }
 
 func (s *State) AddTrx(trx Trx) error {

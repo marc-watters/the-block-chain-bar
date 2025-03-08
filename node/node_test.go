@@ -66,6 +66,11 @@ func (ms *mockState) AddBlock(b db.Block) (db.Hash, error) {
 	return hash, nil
 }
 
+func (ms *mockState) AddBlocks(blocks []db.Block) error {
+	// TODO: Implement mockState.AddBlocks()
+	panic("not implemented")
+}
+
 func (ms *mockState) AddTrx(trx db.Trx) error {
 	ms.trxMempool = append(ms.trxMempool, trx)
 	return nil

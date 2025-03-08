@@ -29,6 +29,7 @@ type (
 	}
 	state interface {
 		AddBlock(db.Block) (db.Hash, error)
+		AddBlocks([]db.Block) error
 		AddTrx(db.Trx) error
 		Persist() (db.Hash, error)
 		LatestBlock() db.Block

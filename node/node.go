@@ -23,6 +23,7 @@ const (
 type (
 	Node struct {
 		state state
+		ip    string
 		port  uint64
 
 		knownPeers map[string]PeerNode
@@ -45,11 +46,11 @@ type (
 	}
 )
 
-func New(s state, port uint64, bootstrap PeerNode) *Node {
+func New(s state, ip string, port uint64, bootstrap PeerNode) *Node {
 	knownPeers := map[string]PeerNode{
 		bootstrap.Address(): bootstrap,
 	}
-	return &Node{s, port, knownPeers}
+	return &Node{s, ip, port, knownPeers}
 }
 
 func NewPeerNode(ip string, port uint64, isBootstrap bool, isActive bool) PeerNode {
@@ -70,8 +71,8 @@ func (n *Node) Run() error {
 		}
 	}()
 
-	fmt.Printf("Listening on %s:%d", "127.0.0.1\n", n.port)
-	return http.ListenAndServe(fmt.Sprintf(":%d", n.port), mx)
+	fmt.Printf("Listening on %s:%d\n", n.ip, n.port)
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", n.ip, n.port), mx)
 }
 
 func (n *Node) GetBalances(w http.ResponseWriter, r *http.Request) {

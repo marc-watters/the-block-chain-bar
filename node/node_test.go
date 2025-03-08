@@ -16,6 +16,7 @@ import (
 )
 
 type mockState struct {
+	latestBlock     db.Block
 	latestBlockHash db.Hash
 	balances        map[db.Account]uint64
 	trxMempool      []db.Trx

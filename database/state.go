@@ -16,6 +16,7 @@ import (
 
 type State struct {
 	balances        map[Account]uint64
+	latestBlock     Block
 	latestBlockHash Hash
 	trxMempool      []Trx
 	db              afero.File
@@ -31,6 +32,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 
 	s := &State{
 		balances:        make(map[Account]uint64),
+		latestBlock:     Block{},
 		latestBlockHash: Hash{},
 		trxMempool:      make([]Trx, 0),
 		db:              nil,
@@ -66,6 +68,10 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 		err = json.Unmarshal(blockFSJSON, &blockFS)
 		if err != nil {
 			return nil, err
+		}
+
+		if len(blockFSJSON) == 0 {
+			break
 		}
 
 		err = s.applyBlock(blockFS.Value)

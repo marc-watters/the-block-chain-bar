@@ -92,6 +92,15 @@ func (s *State) DataDir() string {
 	return s.dataDir
 }
 
+func (s *State) AddBlocks(blocks []Block) error {
+	for _, b := range blocks {
+		if _, err := s.AddBlock(b); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *State) AddBlock(b Block) (Hash, error) {
 	pendingState := s.copy()
 

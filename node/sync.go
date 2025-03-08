@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 )
 
 func (n *Node) sync(ctx context.Context) error {
@@ -108,4 +110,29 @@ func queryPeerStatus(peer PeerNode) (StatusRes, error) {
 	}
 
 	return statusRes, nil
+}
+
+func fetchBlocksFromPeer(p PeerNode, fromBlock db.Hash) ([]db.Block, error) {
+	fmt.Println("Importing blocks...")
+
+	url := fmt.Sprintf(
+		"http://%s%s?%s=%s",
+		p.Address(),
+		endpointSync,
+		endpointSyncQueryKeyFromBlock,
+		fromBlock.Hex(),
+	)
+
+	res, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	var syncRes SyncRes
+	err = readRes(res, &syncRes)
+	if err != nil {
+		return nil, err
+	}
+
+	return syncRes.Blocks, nil
 }

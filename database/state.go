@@ -76,11 +76,11 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 			break
 		}
 
-		err = s.applyBlock(blockFS.Value)
-		if err != nil {
+		if err := applyTRXs(blockFS.Value.TRXs, s); err != nil {
 			return nil, err
 		}
 
+		s.latestBlock = blockFS.Value
 		s.latestBlockHash = blockFS.Key
 	}
 
@@ -197,6 +197,17 @@ func applyTrx(trx Trx, s *State) error {
 
 	s.balances[trx.From] -= trx.Value
 	s.balances[trx.To] += trx.Value
+
+	return nil
+}
+
+func applyTRXs(trxs []Trx, s *State) error {
+	for _, trx := range trxs {
+		err := applyTrx(trx, s)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

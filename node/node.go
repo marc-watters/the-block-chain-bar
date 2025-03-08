@@ -47,7 +47,8 @@ type (
 		IP         string `json:"ip"`
 		Port       uint64 `json:"port"`
 		IsBoostrap bool   `json:"is_bootstrap"`
-		IsActive   bool   `json:"is_active"`
+
+		connected bool
 	}
 )
 
@@ -58,8 +59,8 @@ func New(s state, ip string, port uint64, bootstrap PeerNode) *Node {
 	return &Node{s, ip, port, knownPeers}
 }
 
-func NewPeerNode(ip string, port uint64, isBootstrap bool, isActive bool) PeerNode {
-	return PeerNode{ip, port, isBootstrap, isActive}
+func NewPeerNode(ip string, port uint64, isBootstrap bool, connected bool) PeerNode {
+	return PeerNode{ip, port, isBootstrap, connected}
 }
 
 func (n *Node) Run() error {

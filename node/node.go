@@ -167,6 +167,10 @@ func (n *Node) addPeer(p PeerNode) {
 	n.knownPeers[p.Address()] = p
 }
 
+func (n *Node) deletePeer(p PeerNode) {
+	delete(n.knownPeers, p.Address())
+}
+
 func (pn PeerNode) Address() string {
 	return fmt.Sprintf("%s:%d", pn.IP, pn.Port)
 }

@@ -35,6 +35,10 @@ type (
 	SyncRes struct {
 		Blocks []db.Block `json:"blocks"`
 	}
+	AddPeerRes struct {
+		Success bool   `json:"success"`
+		Error   string `json:"error"`
+	}
 )
 
 func writeRes(w http.ResponseWriter, data any) {

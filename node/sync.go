@@ -23,6 +23,17 @@ func (n *Node) sync(ctx context.Context) error {
 	}
 }
 
+func (n *Node) syncKnownPeers(status StatusRes) error {
+	for _, statusPeer := range status.KnownPeers {
+		if !n.isKnownPeer(statusPeer) {
+			fmt.Println("Found new peer:", statusPeer.Address())
+			n.addPeer(statusPeer)
+		}
+	}
+
+	return nil
+}
+
 func (n *Node) joinKnownPeers(p PeerNode) error {
 	if p.connected {
 		return nil

@@ -15,9 +15,7 @@ func migrateCmd() *cobra.Command {
 		Use:   "migrate",
 		Short: "Migrates the blockchain db according to new business rules.",
 		Run: func(cmd *cobra.Command, args []string) {
-			dataDir, _ := cmd.Flags().GetString(flagDataDir)
-
-			state, err := db.NewStateFromDisk(dataDir)
+			state, err := db.NewStateFromDisk(getDataDirFromCmd(cmd))
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)

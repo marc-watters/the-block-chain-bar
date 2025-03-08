@@ -195,6 +195,14 @@ func (s *State) LatestBlockHash() Hash {
 	return s.latestBlockHash
 }
 
+func (s *State) NextBlockHeight() uint64 {
+	if !s.hasGenesisBlock {
+		return uint64(0)
+	}
+
+	return s.latestBlock.Header.Height + 1
+}
+
 func (s *State) Balances() map[Account]uint64 {
 	return s.balances
 }
@@ -219,11 +227,9 @@ func (s *State) copy() State {
 }
 
 func applyBlock(b Block, s State) error {
-	nextExpectedBlockHeight := s.latestBlock.Header.Height + 1
-
-	if s.hasGenesisBlock && b.Header.Height != nextExpectedBlockHeight {
+	if s.hasGenesisBlock && b.Header.Height != s.NextBlockHeight() {
 		return fmt.Errorf("next expected block height must be '%d' not '%d'",
-			nextExpectedBlockHeight,
+			s.NextBlockHeight(),
 			b.Header.Height,
 		)
 	}

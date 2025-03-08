@@ -50,6 +50,10 @@ func (ms *mockState) LatestBlockHash() db.Hash {
 	return ms.latestBlockHash
 }
 
+func (ms *mockState) NextBlockHeight() uint64 {
+	panic("not implemented")
+}
+
 func (ms *mockState) Balances() map[db.Account]uint64 {
 	return ms.balances
 }

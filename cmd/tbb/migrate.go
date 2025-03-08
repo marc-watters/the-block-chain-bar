@@ -24,7 +24,7 @@ func migrateCmd() *cobra.Command {
 
 			block0 := db.NewBlock(
 				db.Hash{},
-				0,
+				state.NextBlockHeight(),
 				uint64(time.Now().Unix()),
 				[]db.Trx{
 					db.NewTrx("andrej", "andrej", 3, ""),
@@ -40,7 +40,7 @@ func migrateCmd() *cobra.Command {
 
 			block1 := db.NewBlock(
 				block0hash,
-				1,
+				state.NextBlockHeight(),
 				uint64(time.Now().Unix()),
 				[]db.Trx{
 					db.NewTrx("andrej", "babayaga", 2000, ""),
@@ -60,7 +60,7 @@ func migrateCmd() *cobra.Command {
 
 			block2 := db.NewBlock(
 				block1hash,
-				2,
+				state.NextBlockHeight(),
 				uint64(time.Now().Unix()),
 				[]db.Trx{
 					db.NewTrx("andrej", "andrej", 24700, "reward"),

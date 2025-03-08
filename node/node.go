@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	DefaultIP      = "127.0.0.1"
 	DefaultHTTPort = 8080
 
 	endpointBalances              = "/balances/list"

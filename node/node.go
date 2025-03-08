@@ -38,6 +38,10 @@ type (
 	TrxPostRes struct {
 		Hash db.Hash `json:"block_hash"`
 	}
+	StatusRes struct {
+		Hash   db.Hash `json:"block_hash"`
+		Height uint64  `json:"block_height"`
+	}
 )
 
 func New(s state) *Node {
@@ -51,6 +55,7 @@ func (n *Node) Run() error {
 
 	mx.HandleFunc("/balances/list", n.GetBalances)
 	mx.HandleFunc("/trx/add", n.PostTrx)
+	mx.HandleFunc("/node/status", n.Status)
 
 	fmt.Printf("Listening on %s:%d", "127.0.0.1\n", port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), mx)
@@ -86,6 +91,15 @@ func (n *Node) PostTrx(w http.ResponseWriter, r *http.Request) {
 
 	res := TrxPostRes{hash}
 
+	writeRes(w, res)
+}
+
+func (n *Node) Status(w http.ResponseWriter, r *http.Request) {
+	res := StatusRes{
+		Hash:       n.state.LatestBlockHash(),
+		Height:     n.state.LatestBlock().Header.Height,
+		KnownPeers: n.knownPeers,
+	}
 	writeRes(w, res)
 }
 

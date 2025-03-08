@@ -33,7 +33,15 @@ func runCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			n := node.New(s, port)
+			bootstrap := node.NewPeerNode(
+				"127.0.0.1",
+				8080,
+				true,
+				false,
+			)
+
+			n := node.New(s, port, bootstrap)
+
 			fmt.Println("Launching TBB node and its HTTP API...")
 			if err := n.Run(); err != nil {
 				fmt.Fprintf(os.Stderr, "error launching node: %v", err)

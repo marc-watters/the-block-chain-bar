@@ -16,6 +16,8 @@ type (
 	Node struct {
 		state state
 		port  uint64
+
+		knownPeers map[string]PeerNode
 	}
 	state interface {
 		AddTrx(db.Trx) error
@@ -54,8 +56,11 @@ type (
 	}
 )
 
-func New(s state, port uint64) *Node {
-	return &Node{s, port}
+func New(s state, port uint64, bootstrap PeerNode) *Node {
+	knownPeers := map[string]PeerNode{
+		bootstrap.Address(): bootstrap,
+	}
+	return &Node{s, port, knownPeers}
 }
 
 func NewPeerNode(ip string, port uint64, isBootstrap bool, isActive bool) PeerNode {

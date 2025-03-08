@@ -167,6 +167,20 @@ func (s *State) Close() error {
 	return s.db.Close()
 }
 
+func (s *State) copy() State {
+	c := State{}
+	c.latestBlock = s.latestBlock
+	c.latestBlockHash = s.latestBlockHash
+	c.trxMempool = make([]Trx, len(s.trxMempool))
+	c.balances = make(map[Account]uint64)
+
+	maps.Copy(c.balances, s.balances)
+
+	c.trxMempool = append(c.trxMempool, s.trxMempool...)
+
+	return c
+}
+
 func applyBlock(b Block, s State) error {
 	nextExpectedBlockHeight := s.latestBlock.Header.Height + 1
 

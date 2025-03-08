@@ -10,6 +10,7 @@ import (
 
 const (
 	flagDataDir = "datadir"
+	flagIP      = "ip"
 	flagPort    = "port"
 )
 

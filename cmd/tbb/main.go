@@ -7,7 +7,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const flagDataDir = "datadir"
+const (
+	flagDataDir = "datadir"
+	flagPort    = "port"
+)
 
 func main() {
 	tbbCmd := &cobra.Command{

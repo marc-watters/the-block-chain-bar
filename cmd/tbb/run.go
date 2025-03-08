@@ -21,15 +21,20 @@ func runCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
+			port, err := cmd.Flags().GetUint64(flagPort)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+
 			s, err := db.NewStateFromDisk(dataDir)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error getting new state from disk: %v", err)
 				os.Exit(1)
 			}
 
+			n := node.New(s, port)
 			fmt.Println("Launching TBB node and its HTTP API...")
-
-			n := node.New(s)
 			if err := n.Run(); err != nil {
 				fmt.Fprintf(os.Stderr, "error launching node: %v", err)
 				os.Exit(1)
@@ -38,6 +43,7 @@ func runCmd() *cobra.Command {
 	}
 
 	addDefaultRequiredFlags(cmd)
+	cmd.Flags().Uint64(flagPort, node.DefaultHTTPort, "exposed HTTP port for peer communications")
 
 	return cmd
 }

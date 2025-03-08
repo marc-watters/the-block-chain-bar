@@ -15,6 +15,7 @@ const DefaultHTTPort = 8080
 type (
 	Node struct {
 		state state
+		port  uint64
 	}
 	state interface {
 		AddTrx(db.Trx) error
@@ -50,9 +51,7 @@ func New(s state) *Node {
 	return &Node{s}
 }
 
-func (n *Node) Run() error {
-	const port = 8080
-
+func (n *Node) Run(port uint64) error {
 	mx := http.NewServeMux()
 
 	mx.HandleFunc("/balances/list", n.GetBalances)

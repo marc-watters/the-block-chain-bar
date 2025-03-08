@@ -68,7 +68,7 @@ func TestNode(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodGet, "/balances/list", nil)
 		res := httptest.NewRecorder()
 
-		n := &Node{newMockState()}
+		n := &Node{state: newMockState()}
 		n.GetBalances(res, req)
 
 		resBody, err := io.ReadAll(res.Body)
@@ -96,7 +96,7 @@ func TestNode(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, "/tx/add", body)
 		res := httptest.NewRecorder()
 
-		n := &Node{newMockState()}
+		n := &Node{state: newMockState()}
 		n.PostTrx(res, req)
 
 		resBody, err := io.ReadAll(res.Body)

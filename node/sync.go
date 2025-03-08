@@ -23,6 +23,26 @@ func (n *Node) sync(ctx context.Context) error {
 	}
 }
 
+func (n *Node) syncBlocks(p PeerNode, status StatusRes) error {
+	localBlockHeight := n.state.LatestBlock().Header.Height
+	if localBlockHeight < status.Height {
+		newBlocksCount := status.Height - localBlockHeight
+
+		fmt.Println("Found", newBlocksCount, "from peer", p.Address())
+
+		blocks, err := fetchBlocksFromPeer(p, n.state.LatestBlockHash())
+		if err != nil {
+			return err
+		}
+
+		if err := n.state.AddBlocks(blocks); err != nil {
+			return err
+		}
+
+	}
+	return nil
+}
+
 func (n *Node) syncKnownPeers(status StatusRes) error {
 	for _, statusPeer := range status.KnownPeers {
 		if !n.isKnownPeer(statusPeer) {

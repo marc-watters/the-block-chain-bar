@@ -17,11 +17,44 @@ func (n *Node) sync(ctx context.Context) error {
 		case <-ticker.C:
 			fmt.Println("Searching for new Peers and Blocks...")
 
-			n.fetchNewBlocksAndPeers()
+			n.doSync()
 
 		case <-ctx.Done():
 			ticker.Stop()
 		}
+	}
+}
+
+func (n *Node) doSync() {
+	for _, peer := range n.knownPeers {
+		if n.ip == peer.IP && n.port == peer.Port {
+			continue
+		}
+
+		fmt.Println("Querying new peers and blocks from:", peer.Address())
+		status, err := queryPeerStatus(peer)
+		if err != nil {
+			fmt.Println("ERROR:", err)
+			fmt.Println("Peer", peer.Address(), "was removed from known peers")
+			n.deletePeer(peer)
+			continue
+		}
+
+		if err := n.joinKnownPeers(peer); err != nil {
+			fmt.Println("ERROR:", err)
+			continue
+		}
+
+		if err := n.syncBlocks(peer, status); err != nil {
+			fmt.Println("ERROR:", err)
+			continue
+		}
+
+		if err := n.syncKnownPeers(status); err != nil {
+			fmt.Println("ERROR:", err)
+			continue
+		}
+
 	}
 }
 

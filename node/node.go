@@ -139,6 +139,10 @@ func (n *Node) Sync(w http.ResponseWriter, r *http.Request) {
 	writeRes(w, SyncRes{Blocks: blocks})
 }
 
+func (n *Node) addPeer(p PeerNode) {
+	n.knownPeers[p.Address()] = p
+}
+
 func (pn PeerNode) Address() string {
 	return fmt.Sprintf("%s:%d", pn.IP, pn.Port)
 }

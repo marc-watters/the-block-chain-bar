@@ -23,30 +23,44 @@ func (n *Node) sync(ctx context.Context) error {
 	}
 }
 
-func (n *Node) fetchNewBlocksAndPeers() {
-	for _, knownPeer := range n.knownPeers {
-		status, err := queryPeerStatus(knownPeer)
-		if err != nil {
-			fmt.Printf("ERROR: %s\n", err)
-			continue
-		}
-
-		localBlockHeight := n.state.LatestBlock().Header.Height
-		if localBlockHeight < status.Height {
-			newBlocksCount := status.Height - localBlockHeight
-
-			fmt.Printf("Found %d new blocks from Peer %s\n", newBlocksCount, knownPeer.IP)
-		}
-
-		for _, peer := range status.KnownPeers {
-			newPeer, isKnownPeer := n.knownPeers[peer.Address()]
-			if !isKnownPeer {
-				fmt.Printf("Found new Peer %s\n", newPeer.Address())
-
-				n.knownPeers[newPeer.Address()] = newPeer
-			}
-		}
+func (n *Node) joinKnownPeers(p PeerNode) error {
+	if p.connected {
+		return nil
 	}
+
+	hostpath := "http://%s%s"
+	queryIP := "?%s=%s&"
+	queryPort := "%s=%d"
+	url := fmt.Sprintf("%s%s%s",
+		fmt.Sprintf(hostpath, p.Address(), endpointAddPeer),
+		fmt.Sprintf(queryIP, endpointAddPeerQueryKeyIP, n.ip),
+		fmt.Sprintf(queryPort, endpointAddPeerQueryKeyPort, n.port),
+	)
+
+	res, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+
+	var addPeerRes AddPeerRes
+	if err := readRes(res, &addPeerRes); err != nil {
+		return err
+	}
+
+	if addPeerRes.Error != "" {
+		return fmt.Errorf("error: %v", addPeerRes.Error)
+	}
+
+	knownPeer := n.knownPeers[p.Address()]
+	knownPeer.connected = addPeerRes.Success
+
+	n.addPeer(knownPeer)
+
+	if !addPeerRes.Success {
+		return fmt.Errorf("unable to join known peers of '%s'", p.Address())
+	}
+
+	return nil
 }
 
 func queryPeerStatus(peer PeerNode) (StatusRes, error) {

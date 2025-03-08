@@ -115,6 +115,10 @@ func (n *Node) Status(w http.ResponseWriter, r *http.Request) {
 	writeRes(w, res)
 }
 
+func (pn PeerNode) Address() string {
+	return fmt.Sprintf("%s:%d", pn.IP, pn.Port)
+}
+
 func writeRes(w http.ResponseWriter, data any) {
 	dataJSON, err := json.Marshal(data)
 	if err != nil {

@@ -23,6 +23,7 @@ func main() {
 
 	block0 := db.NewBlock(
 		db.Hash{},
+		0,
 		uint64(time.Now().Unix()),
 		[]db.Trx{
 			db.NewTrx("andrej", "andrej", 3, ""),
@@ -44,6 +45,7 @@ func main() {
 
 	block1 := db.NewBlock(
 		block0Hash,
+		1,
 		uint64(time.Now().Unix()),
 		[]db.Trx{
 			db.NewTrx("andrej", "babayaga", 2000, ""),

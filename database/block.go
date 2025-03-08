@@ -17,6 +17,7 @@ type (
 	}
 	BlockHeader struct {
 		Parent Hash   `json:"parent"`
+		Height uint64 `json:"height"`
 		Time   uint64 `json:"time"`
 	}
 
@@ -32,8 +33,8 @@ func (h *Hash) UnmarshalText(data []byte) error {
 	return err
 }
 
-func NewBlock(parent Hash, time uint64, trxs []Trx) Block {
-	return Block{BlockHeader{parent, time}, trxs}
+func NewBlock(parent Hash, height uint64, time uint64, trxs []Trx) Block {
+	return Block{BlockHeader{parent, height, time}, trxs}
 }
 
 func (b Block) Hash() (Hash, error) {

@@ -104,8 +104,14 @@ func (s *State) AddTrx(trx Trx) error {
 }
 
 func (s *State) Persist() (Hash, error) {
+	latestBlockHash, err := s.latestBlock.Hash()
+	if err != nil {
+		return Hash{}, nil
+	}
+
 	block := NewBlock(
 		s.latestBlockHash,
+		s.latestBlock.Header.Height+1,
 		uint64(time.Now().Unix()),
 		s.trxMempool,
 	)
@@ -132,8 +138,10 @@ func (s *State) Persist() (Hash, error) {
 	}
 
 	s.latestBlockHash = blockHash
+	s.latestBlock = block
+	s.trxMempool = []Trx{}
 
-	return s.latestBlockHash, nil
+	return latestBlockHash, nil
 }
 
 func (s *State) LatestBlock() Block {

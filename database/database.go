@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"os"
+	"reflect"
 
 	"github.com/marc-watters/the-block-chain-bar/v2/fs"
 )
@@ -15,7 +16,12 @@ func GetBlocksAfter(blockHash Hash, dataDir string) ([]Block, error) {
 	}
 
 	blocks := make([]Block, 0)
-	shouldStartCollecting := false
+
+	var shouldStartCollecting bool
+	if reflect.DeepEqual(blockHash, Hash{}) {
+		shouldStartCollecting = true
+	}
+
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		if err = scanner.Err(); err != nil {

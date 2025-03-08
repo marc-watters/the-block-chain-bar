@@ -32,6 +32,9 @@ type (
 		Height     uint64              `json:"block_height"`
 		KnownPeers map[string]PeerNode `json:"peers_known"`
 	}
+	SyncRes struct {
+		Blocks []db.Block `json:"blocks"`
+	}
 )
 
 func writeRes(w http.ResponseWriter, data any) {

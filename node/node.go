@@ -7,7 +7,13 @@ import (
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 )
 
-const DefaultHTTPort = 8080
+const (
+	DefaultHTTPort = 8080
+
+	endpointBalances = "/balances/list"
+	endpointPostTrx  = "/trx/add"
+	endpointStatus   = "/node/status"
+)
 
 type (
 	Node struct {
@@ -45,9 +51,9 @@ func NewPeerNode(ip string, port uint64, isBootstrap bool, isActive bool) PeerNo
 func (n *Node) Run() error {
 	mx := http.NewServeMux()
 
-	mx.HandleFunc("/balances/list", n.GetBalances)
-	mx.HandleFunc("/trx/add", n.PostTrx)
-	mx.HandleFunc("/node/status", n.Status)
+	mx.HandleFunc(endpointBalances, n.GetBalances)
+	mx.HandleFunc(endpointPostTrx, n.PostTrx)
+	mx.HandleFunc(endpointStatus, n.Status)
 
 	fmt.Printf("Listening on %s:%d", "127.0.0.1\n", n.port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", n.port), mx)

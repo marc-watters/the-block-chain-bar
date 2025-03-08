@@ -25,12 +25,16 @@ type (
 )
 
 func (h Hash) MarshalText() ([]byte, error) {
-	return []byte(hex.EncodeToString(h[:])), nil
+	return []byte(h.Hex()), nil
 }
 
 func (h *Hash) UnmarshalText(data []byte) error {
 	_, err := hex.Decode(h[:], data)
 	return err
+}
+
+func (h Hash) Hex() string {
+	return hex.EncodeToString(h[:])
 }
 
 func NewBlock(parent Hash, height uint64, time uint64, trxs []Trx) Block {

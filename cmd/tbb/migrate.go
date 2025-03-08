@@ -32,12 +32,7 @@ func migrateCmd() *cobra.Command {
 				},
 			)
 
-			if err = state.AddBlock(block0); err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-
-			block0hash, err := state.Persist()
+			block0hash, err := state.AddBlock(block0)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
@@ -57,12 +52,7 @@ func migrateCmd() *cobra.Command {
 				},
 			)
 
-			if err = state.AddBlock(block1); err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-
-			block1hash, err := state.Persist()
+			block1hash, err := state.AddBlock(block1)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
@@ -77,16 +67,13 @@ func migrateCmd() *cobra.Command {
 				},
 			)
 
-			if err = state.AddBlock(block2); err != nil {
+			block2hash, err := state.AddBlock(block2)
+			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				return
 			}
 
-			_, err = state.Persist()
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			fmt.Printf("Final block hash: %x", block2hash)
 		},
 	}
 

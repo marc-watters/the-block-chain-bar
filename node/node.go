@@ -40,6 +40,7 @@ type (
 		Persist() (db.Hash, error)
 		LatestBlock() db.Block
 		LatestBlockHash() db.Hash
+		NextBlockHeight() uint64
 		Balances() map[db.Account]uint64
 		DataDir() string
 	}
@@ -101,7 +102,7 @@ func (n *Node) PostTrx(w http.ResponseWriter, r *http.Request) {
 
 	block := db.NewBlock(
 		n.state.LatestBlockHash(),
-		n.state.LatestBlock().Header.Height+1,
+		n.state.NextBlockHeight(),
 		uint64(time.Now().Unix()),
 		[]db.Trx{trx},
 	)

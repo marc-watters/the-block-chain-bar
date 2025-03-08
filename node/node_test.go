@@ -38,6 +38,10 @@ func newMockState() *mockState {
 	return ms
 }
 
+func (ms *mockState) DataDir() string {
+	return "./"
+}
+
 func (ms *mockState) LatestBlock() db.Block {
 	return ms.latestBlock
 }

@@ -28,6 +28,7 @@ type (
 		LatestBlock() db.Block
 		LatestBlockHash() db.Hash
 		Balances() map[db.Account]uint64
+		DataDir() string
 	}
 	PeerNode struct {
 		IP         string `json:"ip"`

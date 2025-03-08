@@ -19,6 +19,7 @@ type State struct {
 	latestBlock     Block
 	latestBlockHash Hash
 	trxMempool      []Trx
+	dataDir         string
 	db              afero.File
 }
 
@@ -35,6 +36,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 		latestBlock:     Block{},
 		latestBlockHash: Hash{},
 		trxMempool:      make([]Trx, 0),
+		dataDir:         dataDir,
 		db:              nil,
 	}
 
@@ -83,6 +85,10 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 	}
 
 	return s, nil
+}
+
+func (s *State) DataDir() string {
+	return s.dataDir
 }
 
 func (s *State) AddBlock(b Block) error {

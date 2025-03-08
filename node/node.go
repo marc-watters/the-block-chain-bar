@@ -1,8 +1,10 @@
 package node
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os"
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 )
@@ -10,9 +12,11 @@ import (
 const (
 	DefaultHTTPort = 8080
 
-	endpointBalances = "/balances/list"
-	endpointPostTrx  = "/trx/add"
-	endpointStatus   = "/node/status"
+	endpointBalances              = "/balances/list"
+	endpointPostTrx               = "/trx/add"
+	endpointStatus                = "/node/status"
+	endpointSync                  = "/node/sync"
+	endpointSyncQueryKeyFromBlock = "fromBlock"
 )
 
 type (
@@ -55,6 +59,13 @@ func (n *Node) Run() error {
 	mx.HandleFunc(endpointBalances, n.GetBalances)
 	mx.HandleFunc(endpointPostTrx, n.PostTrx)
 	mx.HandleFunc(endpointStatus, n.Status)
+	mx.HandleFunc(endpointSync, n.Sync)
+
+	go func() {
+		if err := n.sync(context.Background()); err != nil {
+			fmt.Fprintln(os.Stderr, "Node.Run() sync error:", err)
+		}
+	}()
 
 	fmt.Printf("Listening on %s:%d", "127.0.0.1\n", n.port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", n.port), mx)

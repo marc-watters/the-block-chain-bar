@@ -23,6 +23,7 @@ func main() {
 		balancesCmd(),
 		trxCmd(),
 		runCmd(),
+		migrateCmd(),
 		versionCmd(),
 	)
 

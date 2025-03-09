@@ -33,3 +33,13 @@ func TestNode_Run(t *testing.T) {
 	}
 	cancel()
 }
+
+func getTestDataDirPath(t testing.TB) string {
+	t.Helper()
+
+	dir, err := fs.AppFS.TempDir("./", ".tbb_test")
+	if err != nil {
+		t.Fatalf("error creating temp directory: %v", err)
+	}
+	return dir
+}

@@ -64,7 +64,17 @@ func New(s state, ip string, port uint64, bootstrap PeerNode) *Node {
 	knownPeers := map[string]PeerNode{
 		bootstrap.Address(): bootstrap,
 	}
-	return &Node{s, ip, port, knownPeers}
+	return &Node{
+		info:  NewPeerNode(ip, port, false, true),
+		state: s,
+
+		knownPeers:      knownPeers,
+		pendingTRXs:     make(map[string]db.Trx),
+		archivedTRXs:    make(map[string]db.Trx),
+		newSyncedBlocks: make(chan db.Block),
+		newPendingTRXs:  make(chan db.Trx, 10000),
+		isMining:        false,
+	}
 }
 
 func NewPeerNode(ip string, port uint64, isBootstrap bool, connected bool) PeerNode {

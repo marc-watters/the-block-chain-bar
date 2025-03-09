@@ -28,9 +28,10 @@ type (
 		Success bool `json:"success"`
 	}
 	StatusRes struct {
-		Hash       db.Hash             `json:"block_hash"`
-		Height     uint64              `json:"block_height"`
-		KnownPeers map[string]PeerNode `json:"peers_known"`
+		Hash        db.Hash             `json:"block_hash"`
+		Height      uint64              `json:"block_height"`
+		KnownPeers  map[string]PeerNode `json:"peers_known"`
+		PendingTRXs []db.Trx            `json:"pending_trxs"`
 	}
 	SyncRes struct {
 		Blocks []db.Block `json:"blocks"`

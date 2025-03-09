@@ -184,6 +184,28 @@ func (n *Node) isKnownPeer(p PeerNode) bool {
 	return isKnownPeer
 }
 
+func (n *Node) minePendingTRXs(ctx context.Context) error {
+	blockToMine := NewPendingBlock(
+		n.state.LatestBlockHash(),
+		n.state.LatestBlock().Header.Height+1,
+		n.getPendingTRXsAsArray(),
+	)
+
+	minedBlock, err := Mine(ctx, blockToMine)
+	if err != nil {
+		return err
+	}
+
+	n.removeMinedPendingTRXs(minedBlock)
+
+	_, err = n.state.AddBlock(minedBlock)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (n *Node) removeMinedPendingTRXs(block db.Block) {
 	if len(block.TRXs) > 0 && len(n.pendingTRXs) > 0 {
 		fmt.Println("Updating in-memory pending transaction pool:")

@@ -90,6 +90,10 @@ func WriteGenesisToDisk(path string) error {
 	return AppFS.WriteFile(path, []byte(genesisJSON), 0o644)
 }
 
+func RemoveDir(path string) error {
+	return AppFS.RemoveAll(path)
+}
+
 func ExpandPath(p string) string {
 	if i := strings.Index(p, ":"); i > 0 {
 		return p

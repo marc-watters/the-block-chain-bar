@@ -60,22 +60,36 @@ func (n *Node) doSync() {
 
 func (n *Node) syncBlocks(p PeerNode, status StatusRes) error {
 	localBlockHeight := n.state.LatestBlock().Header.Height
-	if localBlockHeight < status.Height {
-		newBlocksCount := status.Height - localBlockHeight
 
-		fmt.Println("Found", newBlocksCount, "from peer", p.Address())
-
-		blocks, err := fetchBlocksFromPeer(p, n.state.LatestBlockHash())
-		if err != nil {
-			return err
-		}
-
-		if err := n.state.AddBlocks(blocks); err != nil {
-			return err
-		}
-
+	if status.Hash.IsEmpty() {
+		return nil
 	}
-	return nil
+
+	if status.Height < localBlockHeight {
+		return nil
+	}
+
+	if status.Height == 0 && !n.state.LatestBlockHash().IsEmpty() {
+		return nil
+	}
+
+	newBlocksCount := status.Height - localBlockHeight
+	if localBlockHeight == 0 && status.Height == 0 {
+		newBlocksCount = 1
+	}
+
+	fmt.Println("Found", newBlocksCount, "new blocks from peer:", p.Address())
+
+	if newBlocksCount == 0 {
+		return nil
+	}
+
+	blocks, err := fetchBlocksFromPeer(p, n.state.LatestBlockHash())
+	if err != nil {
+		return err
+	}
+
+	return n.state.AddBlocks(blocks)
 }
 
 func (n *Node) syncKnownPeers(status StatusRes) error {

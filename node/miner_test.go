@@ -1,6 +1,7 @@
 package node
 
 import (
+	"context"
 	"encoding/hex"
 	"testing"
 
@@ -38,6 +39,27 @@ func TestInvalidBlockHash(t *testing.T) {
 	}
 }
 
+func TestMine(t *testing.T) {
+	pendingBlock := createRandomPendingBlock()
+
+	ctx := context.Background()
+
+	minedBlock, err := Mine(ctx, pendingBlock)
+	if err != nil {
+		t.Fatalf("error mining block: %v", err)
+	}
+
+	minedBlockHash, err := minedBlock.Hash()
+	if err != nil {
+		t.Fatalf("error hashing block: %v", err)
+	}
+
+	got := minedBlockHash.IsValid()
+	want := true
+	if got != want {
+		t.Errorf("expected mined block hash to be valid")
+	}
+}
 
 func createRandomPendingBlock() PendingBlock {
 	return NewPendingBlock(db.Hash{}, 0, []db.Trx{

@@ -37,3 +37,11 @@ func TestInvalidBlockHash(t *testing.T) {
 		t.Errorf("hash should be invalid: %s:", hexHash)
 	}
 }
+
+
+func createRandomPendingBlock() PendingBlock {
+	return NewPendingBlock(db.Hash{}, 0, []db.Trx{
+		db.NewTrx("andrej", "andrej", 3, ""),
+		db.NewTrx("andrej", "andrej", 700, ""),
+	})
+}

@@ -33,6 +33,7 @@ type (
 
 		knownPeers map[string]PeerNode
 		pendingTRXs     map[string]db.Trx
+		archivedTRXs    map[string]db.Trx
 	}
 	state interface {
 		AddBlock(db.Block) (db.Hash, error)
@@ -181,6 +182,22 @@ func (n *Node) isKnownPeer(p PeerNode) bool {
 	_, isKnownPeer := n.knownPeers[p.Address()]
 
 	return isKnownPeer
+}
+
+func (n *Node) removeMinedPendingTRXs(block db.Block) {
+	if len(block.TRXs) > 0 && len(n.pendingTRXs) > 0 {
+		fmt.Println("Updating in-memory pending transaction pool:")
+	}
+
+	for _, trx := range block.TRXs {
+		trxHash, _ := trx.Hash()
+		if _, exists := n.pendingTRXs[trxHash.Hex()]; exists {
+			fmt.Println("\t-archiving mined transaction:", trxHash.Hex())
+
+			n.archivedTRXs[trxHash.Hex()] = trx
+			delete(n.pendingTRXs, trxHash.Hex())
+		}
+	}
 }
 
 func (n *Node) getPendingTRXsAsArray() []db.Trx {

@@ -134,8 +134,8 @@ func (n *Node) joinKnownPeers(p PeerNode) error {
 	queryPort := "%s=%d"
 	url := fmt.Sprintf("%s%s%s",
 		fmt.Sprintf(hostpath, p.Address(), endpointAddPeer),
-		fmt.Sprintf(queryIP, endpointAddPeerQueryKeyIP, n.ip),
-		fmt.Sprintf(queryPort, endpointAddPeerQueryKeyPort, n.port),
+		fmt.Sprintf(queryIP, endpointAddPeerQueryKeyIP, n.info.IP),
+		fmt.Sprintf(queryPort, endpointAddPeerQueryKeyPort, n.info.Port),
 	)
 
 	res, err := http.Get(url)

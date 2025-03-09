@@ -106,7 +106,15 @@ func (n *Node) Run(ctx context.Context) error {
 	fmt.Println("Blockchain state:")
 	fmt.Printf("	- height: %d\n", n.state.LatestBlock().Header.Height)
 	fmt.Printf("	- hash: %s\n", n.state.LatestBlockHash().Hex())
-	return http.ListenAndServe(fmt.Sprintf("%s:%d", n.info.IP, n.info.Port), mx)
+
+	server := &http.Server{Addr: fmt.Sprintf(":%d", n.info.Port)}
+
+	go func() {
+		<-ctx.Done()
+		server.Close()
+	}()
+
+	return server.ListenAndServe()
 }
 
 func (n *Node) GetBalances(w http.ResponseWriter, r *http.Request) {

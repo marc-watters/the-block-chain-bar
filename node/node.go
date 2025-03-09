@@ -134,22 +134,12 @@ func (n *Node) PostTrx(w http.ResponseWriter, r *http.Request) {
 
 	trx := db.NewTrx(req.From, req.To, req.Value, req.Data)
 
-	block := db.NewBlock(
-		n.state.LatestBlockHash(),
-		n.state.NextBlockHeight(),
-		uint64(time.Now().Unix()),
-		[]db.Trx{trx},
-	)
-
-	hash, err := n.state.AddBlock(block)
-	if err != nil {
+	if err := n.AddPendingTrx(trx, n.info); err != nil {
 		writeErr(w, err)
 		return
 	}
 
-	res := TrxPostRes{hash}
-
-	writeRes(w, res)
+	writeRes(w, TrxPostRes{Success: true})
 }
 
 func (n *Node) Status(w http.ResponseWriter, r *http.Request) {

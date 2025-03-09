@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -169,6 +170,29 @@ func (n *Node) AddPeer(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Peer", peer.Address(), "was added to known peers")
 
 	writeRes(w, AddPeerRes{true, ""})
+}
+
+func (n *Node) AddPendingTrx(trx db.Trx, fromPeer PeerNode) error {
+	trxHash, err := trx.Hash()
+	if err != nil {
+		return err
+	}
+
+	trxJSON, err := json.Marshal(trx)
+	if err != nil {
+		return err
+	}
+
+	_, isAlreadyPending := n.pendingTRXs[trxHash.Hex()]
+	_, isArchived := n.archivedTRXs[trxHash.Hex()]
+
+	if !isAlreadyPending && !isArchived {
+		fmt.Printf("[%s]- added pending transaction %s from peer %s\n", n.info.Address(), trxJSON, fromPeer.Address())
+		n.pendingTRXs[trxHash.Hex()] = trx
+		n.newPendingTRXs <- trx
+	}
+
+	return nil
 }
 
 func (n *Node) addPeer(p PeerNode) {

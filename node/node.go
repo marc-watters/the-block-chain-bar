@@ -204,7 +204,7 @@ func (n *Node) deletePeer(p PeerNode) {
 }
 
 func (n *Node) isKnownPeer(p PeerNode) bool {
-	if p.IP == n.ip && p.Port == n.port {
+	if p.IP == n.info.IP && p.Port == n.info.Port {
 		return true
 	}
 	_, isKnownPeer := n.knownPeers[p.Address()]

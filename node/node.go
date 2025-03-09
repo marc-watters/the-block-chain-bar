@@ -144,9 +144,10 @@ func (n *Node) PostTrx(w http.ResponseWriter, r *http.Request) {
 
 func (n *Node) Status(w http.ResponseWriter, r *http.Request) {
 	res := StatusRes{
-		Hash:       n.state.LatestBlockHash(),
-		Height:     n.state.LatestBlock().Header.Height,
-		KnownPeers: n.knownPeers,
+		Hash:        n.state.LatestBlockHash(),
+		Height:      n.state.LatestBlock().Header.Height,
+		KnownPeers:  n.knownPeers,
+		PendingTRXs: n.getPendingTRXsAsArray(),
 	}
 	writeRes(w, res)
 }

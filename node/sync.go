@@ -103,6 +103,15 @@ func (n *Node) syncKnownPeers(status StatusRes) error {
 	return nil
 }
 
+func (n *Node) syncPendingTRXs(p PeerNode, status StatusRes) error {
+	for _, trx := range status.PendingTRXs {
+		if err := n.AddPendingTrx(trx, p); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (n *Node) joinKnownPeers(p PeerNode) error {
 	if p.connected {
 		return nil

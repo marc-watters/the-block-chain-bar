@@ -23,6 +23,8 @@ const (
 	endpointAddPeer               = "/node/peer"
 	endpointAddPeerQueryKeyIP     = "ip"
 	endpointAddPeerQueryKeyPort   = "port"
+
+	mininingIntervalSeconds = 10
 )
 
 type (
@@ -31,9 +33,12 @@ type (
 		ip    string
 		port  uint64
 
-		knownPeers map[string]PeerNode
+		knownPeers      map[string]PeerNode
 		pendingTRXs     map[string]db.Trx
 		archivedTRXs    map[string]db.Trx
+		newSyncedBlocks chan db.Block
+		newPendingTRXs  chan db.Trx
+		isMining        bool
 	}
 	state interface {
 		AddBlock(db.Block) (db.Hash, error)
@@ -182,6 +187,44 @@ func (n *Node) isKnownPeer(p PeerNode) bool {
 	_, isKnownPeer := n.knownPeers[p.Address()]
 
 	return isKnownPeer
+}
+
+func (n *Node) mine(ctx context.Context) error {
+	var miningCtx context.Context
+	var stopCurrentMining context.CancelFunc
+
+	ticker := time.NewTicker(time.Second * mininingIntervalSeconds)
+
+	for {
+		select {
+		case <-ticker.C:
+			go func() {
+				if len(n.pendingTRXs) > 0 && !n.isMining {
+					n.isMining = true
+
+					miningCtx, stopCurrentMining = context.WithCancel(ctx)
+
+					err := n.minePendingTRXs(miningCtx)
+					if err != nil {
+						fmt.Println("Error:", err)
+					}
+
+					n.isMining = false
+				}
+			}()
+		case block := <-n.newSyncedBlocks:
+			if n.isMining {
+				blockHash, _ := block.Hash()
+				fmt.Println("\nPeer mined next block", blockHash.Hex(), "faster.")
+
+				n.removeMinedPendingTRXs(block)
+				stopCurrentMining()
+			}
+		case <-ctx.Done():
+			ticker.Stop()
+			return nil
+		}
+	}
 }
 
 func (n *Node) minePendingTRXs(ctx context.Context) error {

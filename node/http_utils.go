@@ -25,7 +25,7 @@ type (
 		Data  string     `json:"data"`
 	}
 	TrxPostRes struct {
-		Hash db.Hash `json:"block_hash"`
+		Success bool `json:"success"`
 	}
 	StatusRes struct {
 		Hash       db.Hash             `json:"block_hash"`

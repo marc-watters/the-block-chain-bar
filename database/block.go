@@ -19,6 +19,7 @@ type (
 	BlockHeader struct {
 		Parent Hash   `json:"parent"`
 		Height uint64 `json:"height"`
+		Nonce  uint32 `json:"nonce"`
 		Time   uint64 `json:"time"`
 	}
 
@@ -42,8 +43,8 @@ func (h Hash) IsEmpty() bool {
 	return bytes.Equal(h[:], []byte(new(Hash)[:]))
 }
 
-func NewBlock(parent Hash, height uint64, time uint64, trxs []Trx) Block {
-	return Block{BlockHeader{parent, height, time}, trxs}
+func NewBlock(parent Hash, height uint64, nonce uint32, time uint64, trxs []Trx) Block {
+	return Block{BlockHeader{parent, height, nonce, time}, trxs}
 }
 
 func (b Block) Hash() (Hash, error) {

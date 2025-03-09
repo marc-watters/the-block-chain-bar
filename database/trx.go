@@ -4,16 +4,18 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"strings"
+	"time"
 )
 
 type (
 	Account string
 
 	Trx struct {
-		From  Account
-		To    Account
-		Value uint64
-		Data  string
+		From  Account `json:"from"`
+		To    Account `json:"to"`
+		Value uint64  `json:"value"`
+		Data  string  `json:"data"`
+		Time  uint64  `json:"time"`
 	}
 )
 
@@ -22,7 +24,7 @@ func NewAccount(value string) Account {
 }
 
 func NewTrx(from Account, to Account, value uint64, data string) Trx {
-	return Trx{from, to, value, data}
+	return Trx{from, to, value, data, uint64(time.Now().UnixNano())}
 }
 
 func (t Trx) IsReward() bool {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"testing"
+	"time"
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 )
@@ -59,6 +60,18 @@ func TestMine(t *testing.T) {
 	if got != want {
 		t.Errorf("expected mined block hash to be valid")
 	}
+}
+
+func TestMineWithTimeout(t *testing.T) {
+	pendingBlock := createRandomPendingBlock()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Microsecond)
+
+	if _, err := Mine(ctx, pendingBlock); err == nil {
+		t.Errorf("expected timeout error mining block: %v", err)
+		cancel()
+	}
+	cancel()
 }
 
 func createRandomPendingBlock() PendingBlock {

@@ -29,10 +29,9 @@ const (
 
 type (
 	Node struct {
-		state state
-		ip    string
-		port  uint64
+		info PeerNode
 
+		state           state
 		knownPeers      map[string]PeerNode
 		pendingTRXs     map[string]db.Trx
 		archivedTRXs    map[string]db.Trx

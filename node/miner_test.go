@@ -22,3 +22,18 @@ func TestValidBlockHash(t *testing.T) {
 		t.Errorf("hash should be valid: %s:", hexHash)
 	}
 }
+
+func TestInvalidBlockHash(t *testing.T) {
+	hexHash := "000001fa04f8160395c387277f8b2f14837603383d33809a4db586086168edfa"
+
+	var hash db.Hash
+	if _, err := hex.Decode(hash[:], []byte(hexHash)); err != nil {
+		t.Fatalf("error decoding hash: %v", err)
+	}
+
+	got := hash.IsValid()
+	want := false
+	if got != want {
+		t.Errorf("hash should be invalid: %s:", hexHash)
+	}
+}

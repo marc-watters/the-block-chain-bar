@@ -71,7 +71,7 @@ func NewPeerNode(ip string, port uint64, isBootstrap bool, connected bool) PeerN
 	return PeerNode{ip, port, isBootstrap, connected}
 }
 
-func (n *Node) Run() error {
+func (n *Node) Run(ctx context.Context) error {
 	mx := http.NewServeMux()
 
 	mx.HandleFunc(endpointBalances, n.GetBalances)
@@ -85,9 +85,18 @@ func (n *Node) Run() error {
 			fmt.Fprintln(os.Stderr, "Node.Run() sync error:", err)
 		}
 	}()
+	go func() {
+		if err := n.mine(context.Background()); err != nil {
+			fmt.Fprintln(os.Stderr, "Node.Run() mine error:", err)
+		}
+	}()
 
-	fmt.Printf("Listening on %s:%d\n", n.ip, n.port)
-	return http.ListenAndServe(fmt.Sprintf("%s:%d", n.ip, n.port), mx)
+	fmt.Printf("Listening on %s:%d\n", n.info.IP, n.info.Port)
+
+	fmt.Println("Blockchain state:")
+	fmt.Printf("	- height: %d\n", n.state.LatestBlock().Header.Height)
+	fmt.Printf("	- hash: %s\n", n.state.LatestBlockHash().Hex())
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", n.info.IP, n.info.Port), mx)
 }
 
 func (n *Node) GetBalances(w http.ResponseWriter, r *http.Request) {

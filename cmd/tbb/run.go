@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -43,7 +44,7 @@ func runCmd() *cobra.Command {
 			n := node.New(s, ip, port, bootstrap)
 
 			fmt.Println("Launching TBB node and its HTTP API...")
-			if err := n.Run(); err != nil {
+			if err := n.Run(context.Background()); err != nil {
 				fmt.Fprintf(os.Stderr, "error launching node: %v", err)
 				os.Exit(1)
 			}

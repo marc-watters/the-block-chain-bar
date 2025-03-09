@@ -32,6 +32,7 @@ type (
 		port  uint64
 
 		knownPeers map[string]PeerNode
+		pendingTRXs     map[string]db.Trx
 	}
 	state interface {
 		AddBlock(db.Block) (db.Hash, error)
@@ -180,6 +181,15 @@ func (n *Node) isKnownPeer(p PeerNode) bool {
 	_, isKnownPeer := n.knownPeers[p.Address()]
 
 	return isKnownPeer
+}
+
+func (n *Node) getPendingTRXsAsArray() []db.Trx {
+	trxs := make([]db.Trx, 0)
+	for _, trx := range n.pendingTRXs {
+		trxs = append(trxs, trx)
+	}
+
+	return trxs
 }
 
 func (pn PeerNode) Address() string {

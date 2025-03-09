@@ -1,13 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
+	"github.com/marc-watters/the-block-chain-bar/v2/node"
 )
 
 func migrateCmd() *cobra.Command {
@@ -22,27 +23,12 @@ func migrateCmd() *cobra.Command {
 			}
 			defer state.Close()
 
-			block0 := db.NewBlock(
+			pendingBlock := node.NewPendingBlock(
 				db.Hash{},
 				state.NextBlockHeight(),
-				uint64(time.Now().Unix()),
 				[]db.Trx{
 					db.NewTrx("andrej", "andrej", 3, ""),
 					db.NewTrx("andrej", "andrej", 700, "reward"),
-				},
-			)
-
-			block0hash, err := state.AddBlock(block0)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-
-			block1 := db.NewBlock(
-				block0hash,
-				state.NextBlockHeight(),
-				uint64(time.Now().Unix()),
-				[]db.Trx{
 					db.NewTrx("andrej", "babayaga", 2000, ""),
 					db.NewTrx("andrej", "andrej", 100, "reward"),
 					db.NewTrx("babayaga", "andrej", 1, ""),
@@ -52,28 +38,10 @@ func migrateCmd() *cobra.Command {
 				},
 			)
 
-			block1hash, err := state.AddBlock(block1)
-			if err != nil {
+			if _, err := node.Mine(context.Background(), pendingBlock); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
-
-			block2 := db.NewBlock(
-				block1hash,
-				state.NextBlockHeight(),
-				uint64(time.Now().Unix()),
-				[]db.Trx{
-					db.NewTrx("andrej", "andrej", 24700, "reward"),
-				},
-			)
-
-			block2hash, err := state.AddBlock(block2)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				return
-			}
-
-			fmt.Printf("Final block hash: %x", block2hash)
 		},
 	}
 

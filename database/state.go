@@ -20,7 +20,6 @@ type State struct {
 	latestBlock     Block
 	latestBlockHash Hash
 	hasGenesisBlock bool
-	trxMempool      []Trx
 	dataDir         string
 	db              afero.File
 }
@@ -38,7 +37,6 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 		latestBlock:     Block{},
 		latestBlockHash: Hash{},
 		hasGenesisBlock: false,
-		trxMempool:      make([]Trx, 0),
 		dataDir:         dataDir,
 		db:              nil,
 	}
@@ -216,12 +214,9 @@ func (s *State) copy() State {
 	c.latestBlock = s.latestBlock
 	c.latestBlockHash = s.latestBlockHash
 	c.hasGenesisBlock = s.hasGenesisBlock
-	c.trxMempool = make([]Trx, len(s.trxMempool))
 	c.balances = make(map[Account]uint64)
 
 	maps.Copy(c.balances, s.balances)
-
-	c.trxMempool = append(c.trxMempool, s.trxMempool...)
 
 	return c
 }

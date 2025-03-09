@@ -239,6 +239,15 @@ func applyBlock(b Block, s State) error {
 		)
 	}
 
+	hash, err := b.Hash()
+	if err != nil {
+		return err
+	}
+
+	if !hash.IsValid() {
+		return fmt.Errorf("invalid block hash %x", hash)
+	}
+
 	return applyTRXs(b.TRXs, &s)
 }
 

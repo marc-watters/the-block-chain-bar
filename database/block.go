@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 )
 
 type (
@@ -41,6 +42,13 @@ func (h Hash) Hex() string {
 
 func (h Hash) IsEmpty() bool {
 	return bytes.Equal(h[:], []byte(new(Hash)[:]))
+}
+
+func (h Hash) IsValid() bool {
+	return fmt.Sprintf("%x", h[0]) == "0" &&
+		fmt.Sprintf("%x", h[1]) == "0" &&
+		fmt.Sprintf("%x", h[2]) == "0" &&
+		fmt.Sprintf("%x", h[3]) != "0"
 }
 
 func NewBlock(parent Hash, height uint64, nonce uint32, time uint64, trxs []Trx) Block {

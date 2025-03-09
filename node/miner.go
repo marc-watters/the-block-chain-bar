@@ -17,3 +17,7 @@ func NewPendingBlock(parent db.Hash, height uint64, trxs []db.Trx) PendingBlock 
 	t := uint64(time.Now().Unix())
 	return PendingBlock{parent, height, t, trxs}
 }
+
+func generateNonce() uint32 {
+	return rand.Uint32()
+}

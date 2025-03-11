@@ -26,6 +26,7 @@ func migrateCmd() *cobra.Command {
 			pendingBlock := node.NewPendingBlock(
 				db.Hash{},
 				state.NextBlockHeight(),
+				db.NewAccount("andrej"),
 				[]db.Trx{
 					db.NewTrx("andrej", "andrej", 3, ""),
 					db.NewTrx("andrej", "andrej", 700, "reward"),

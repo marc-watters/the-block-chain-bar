@@ -41,7 +41,8 @@ func TestInvalidBlockHash(t *testing.T) {
 }
 
 func TestMine(t *testing.T) {
-	pendingBlock := createRandomPendingBlock()
+	miner := db.NewAccount("andrej")
+	pendingBlock := createRandomPendingBlock(miner)
 
 	ctx := context.Background()
 
@@ -55,15 +56,18 @@ func TestMine(t *testing.T) {
 		t.Fatalf("error hashing block: %v", err)
 	}
 
-	got := minedBlockHash.IsValid()
-	want := true
-	if got != want {
-		t.Errorf("expected mined block hash to be valid")
+	if !minedBlockHash.IsValid() {
+		t.Fatal("expected mined block hash to be valid")
+	}
+
+	if minedBlock.Header.Miner != miner {
+		t.Errorf("mined block miner should equal miner from pending block")
 	}
 }
 
 func TestMineWithTimeout(t *testing.T) {
-	pendingBlock := createRandomPendingBlock()
+	miner := db.NewAccount("andrej")
+	pendingBlock := createRandomPendingBlock(miner)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Microsecond)
 
@@ -74,9 +78,13 @@ func TestMineWithTimeout(t *testing.T) {
 	cancel()
 }
 
-func createRandomPendingBlock() PendingBlock {
-	return NewPendingBlock(db.Hash{}, 0, []db.Trx{
-		db.NewTrx("andrej", "andrej", 3, ""),
-		db.NewTrx("andrej", "andrej", 700, ""),
-	})
+func createRandomPendingBlock(miner db.Account) PendingBlock {
+	return NewPendingBlock(
+		db.Hash{},
+		1,
+		miner,
+		[]db.Trx{
+			db.NewTrx("andrej", "andrej", 3, ""),
+			db.NewTrx("andrej", "andrej", 700, ""),
+		})
 }

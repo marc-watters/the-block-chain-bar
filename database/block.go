@@ -18,10 +18,11 @@ type (
 		TRXs   []Trx       `json:"payload"`
 	}
 	BlockHeader struct {
-		Parent Hash   `json:"parent"`
-		Height uint64 `json:"height"`
-		Nonce  uint32 `json:"nonce"`
-		Time   uint64 `json:"time"`
+		Parent Hash    `json:"parent"`
+		Height uint64  `json:"height"`
+		Nonce  uint32  `json:"nonce"`
+		Time   uint64  `json:"time"`
+		Miner  Account `json:"miner"`
 	}
 
 	Hash [32]byte
@@ -51,8 +52,8 @@ func (h Hash) IsValid() bool {
 		fmt.Sprintf("%x", h[3]) != "0"
 }
 
-func NewBlock(parent Hash, height uint64, nonce uint32, time uint64, trxs []Trx) Block {
-	return Block{BlockHeader{parent, height, nonce, time}, trxs}
+func NewBlock(parent Hash, height uint64, nonce uint32, time uint64, miner Account, trxs []Trx) Block {
+	return Block{BlockHeader{parent, height, nonce, time, miner}, trxs}
 }
 
 func (b Block) Hash() (Hash, error) {

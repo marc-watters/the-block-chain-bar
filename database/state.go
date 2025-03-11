@@ -8,7 +8,6 @@ import (
 	"maps"
 	"os"
 	"reflect"
-	"time"
 
 	"github.com/spf13/afero"
 
@@ -133,56 +132,6 @@ func (s *State) AddBlock(b Block) (Hash, error) {
 	s.hasGenesisBlock = true
 
 	return blockHash, nil
-}
-
-func (s *State) AddTrx(trx Trx) error {
-	if err := applyTrx(trx, s); err != nil {
-		return err
-	}
-	s.trxMempool = append(s.trxMempool, trx)
-
-	return nil
-}
-
-func (s *State) Persist() (Hash, error) {
-	latestBlockHash, err := s.latestBlock.Hash()
-	if err != nil {
-		return Hash{}, nil
-	}
-
-	block := NewBlock(
-		s.latestBlockHash,
-		s.latestBlock.Header.Height+1,
-		uint64(time.Now().Unix()),
-		s.trxMempool,
-	)
-
-	blockHash, err := block.Hash()
-	if err != nil {
-		return Hash{}, err
-	}
-
-	blockFS := BlockFS{blockHash, block}
-
-	blockFSJON, err := json.Marshal(blockFS)
-	if err != nil {
-		return Hash{}, err
-	}
-
-	fmt.Println()
-	fmt.Println("Persisting new Block to disk:")
-	fmt.Printf("\t%s", blockFSJON)
-	fmt.Println()
-
-	if _, err := s.db.Write(append(blockFSJON, '\n')); err != nil {
-		return Hash{}, err
-	}
-
-	s.latestBlockHash = blockHash
-	s.latestBlock = block
-	s.trxMempool = []Trx{}
-
-	return latestBlockHash, nil
 }
 
 func (s *State) LatestBlock() Block {

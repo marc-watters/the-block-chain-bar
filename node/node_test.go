@@ -75,19 +75,6 @@ func (ms *mockState) AddBlocks(blocks []db.Block) error {
 	panic("not implemented")
 }
 
-func (ms *mockState) AddTrx(trx db.Trx) error {
-	ms.trxMempool = append(ms.trxMempool, trx)
-	return nil
-}
-
-func (ms *mockState) Persist() (db.Hash, error) {
-	if _, err := rand.Read(ms.latestBlockHash[:]); err != nil {
-		fmt.Printf("error generating random hash: %v\n", err)
-		os.Exit(1)
-	}
-	return ms.latestBlockHash, nil
-}
-
 func TestNode(t *testing.T) {
 	t.Run("get balances", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodGet, "/balances/list", nil)

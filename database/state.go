@@ -76,7 +76,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 			break
 		}
 
-		if err := applyTRXs(blockFS.Value.TRXs, s); err != nil {
+		if err := applyBlock(blockFS.Value, s); err != nil {
 			return nil, err
 		}
 
@@ -104,7 +104,7 @@ func (s *State) AddBlocks(blocks []Block) error {
 func (s *State) AddBlock(b Block) (Hash, error) {
 	pendingState := s.copy()
 
-	if err := applyBlock(b, pendingState); err != nil {
+	if err := applyBlock(b, &pendingState); err != nil {
 		return Hash{}, err
 	}
 
@@ -170,7 +170,7 @@ func (s *State) copy() State {
 	return c
 }
 
-func applyBlock(b Block, s State) error {
+func applyBlock(b Block, s *State) error {
 	if s.hasGenesisBlock && b.Header.Height != s.NextBlockHeight() {
 		return fmt.Errorf("next expected block height must be '%d' not '%d'",
 			s.NextBlockHeight(),
@@ -197,7 +197,13 @@ func applyBlock(b Block, s State) error {
 		return fmt.Errorf("invalid block hash %x", hash)
 	}
 
-	return applyTRXs(b.TRXs, &s)
+	if err := applyTRXs(b.TRXs, s); err != nil {
+		return err
+	}
+
+	s.balances[b.Header.Miner] += BlockReward
+
+	return nil
 }
 
 func applyTrx(trx Trx, s *State) error {
@@ -209,11 +215,6 @@ func applyTrx(trx Trx, s *State) error {
 	}
 	if trx.Value == 0 {
 		return NewInvalidTransaction("Value")
-	}
-
-	if trx.IsReward() {
-		s.balances[trx.To] += trx.Value
-		return nil
 	}
 
 	if trx.Value > s.balances[trx.From] {

@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
+	"github.com/marc-watters/the-block-chain-bar/v2/node"
 )
 
 const (
@@ -56,8 +58,6 @@ func trxAddCmd() *cobra.Command {
 				fmt.Fprintln(os.Stderr, err)
 			}
 
-			trx := db.NewTrx(db.NewAccount(from), db.NewAccount(to), value, data)
-
 			s, err := db.NewStateFromDisk(getDataDirFromCmd(cmd))
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
@@ -65,16 +65,16 @@ func trxAddCmd() *cobra.Command {
 			}
 			defer s.Close()
 
-			err = s.AddTrx(trx)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			trx := db.NewTrx(db.NewAccount(from), db.NewAccount(to), value, data)
 
-			_, err = s.Persist()
-			if err != nil {
+			pendingBlock := node.NewPendingBlock(
+				s.LatestBlockHash(),
+				s.NextBlockHeight(),
+				[]db.Trx{trx},
+			)
+
+			if _, err := node.Mine(context.Background(), pendingBlock); err != nil {
 				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
 			}
 
 			fmt.Println("trx successfully persisted to the ledger")

@@ -8,6 +8,8 @@ import (
 	"fmt"
 )
 
+const BlockReward = 100
+
 type (
 	BlockFS struct {
 		Key   Hash  `json:"hash"`

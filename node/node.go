@@ -15,6 +15,7 @@ import (
 const (
 	DefaultIP      = "127.0.0.1"
 	DefaultHTTPort = 8080
+	DefaultMiner   = ""
 
 	endpointBalances              = "/balances/list"
 	endpointPostTrx               = "/trx/add"
@@ -24,6 +25,7 @@ const (
 	endpointAddPeer               = "/node/peer"
 	endpointAddPeerQueryKeyIP     = "ip"
 	endpointAddPeerQueryKeyPort   = "port"
+	endpointAddPeerQueryKeyMiner  = "miner"
 
 	mininingIntervalSeconds = 10
 )
@@ -50,20 +52,21 @@ type (
 		DataDir() string
 	}
 	PeerNode struct {
-		IP         string `json:"ip"`
-		Port       uint64 `json:"port"`
-		IsBoostrap bool   `json:"is_bootstrap"`
+		IP         string     `json:"ip"`
+		Port       uint64     `json:"port"`
+		IsBoostrap bool       `json:"is_bootstrap"`
+		Account    db.Account `json:"account"`
 
 		connected bool
 	}
 )
 
-func New(s state, ip string, port uint64, bootstrap PeerNode) *Node {
+func New(s state, ip string, port uint64, acc db.Account, bootstrap PeerNode) *Node {
 	knownPeers := map[string]PeerNode{
 		bootstrap.Address(): bootstrap,
 	}
 	return &Node{
-		info:  NewPeerNode(ip, port, false, true),
+		info:  NewPeerNode(ip, port, false, acc, true),
 		state: s,
 
 		knownPeers:      knownPeers,
@@ -75,8 +78,8 @@ func New(s state, ip string, port uint64, bootstrap PeerNode) *Node {
 	}
 }
 
-func NewPeerNode(ip string, port uint64, isBootstrap bool, connected bool) PeerNode {
-	return PeerNode{ip, port, isBootstrap, connected}
+func NewPeerNode(ip string, port uint64, isBootstrap bool, acc db.Account, connected bool) PeerNode {
+	return PeerNode{ip, port, isBootstrap, acc, connected}
 }
 
 func (n *Node) Run(ctx context.Context) error {
@@ -173,13 +176,15 @@ func (n *Node) AddPeer(w http.ResponseWriter, r *http.Request) {
 	peerIP := r.URL.Query().Get(endpointAddPeerQueryKeyIP)
 	peerPortRaw := r.URL.Query().Get(endpointAddPeerQueryKeyPort)
 
+	minerRaw := r.URL.Query().Get(endpointAddPeerQueryKeyPort)
+
 	peerPort, err := strconv.ParseUint(peerPortRaw, 10, 32)
 	if err != nil {
 		writeRes(w, AddPeerRes{false, err.Error()})
 		return
 	}
 
-	peer := NewPeerNode(peerIP, peerPort, false, true)
+	peer := NewPeerNode(peerIP, peerPort, false, db.NewAccount(minerRaw), true)
 
 	n.addPeer(peer)
 
@@ -270,6 +275,7 @@ func (n *Node) minePendingTRXs(ctx context.Context) error {
 	blockToMine := NewPendingBlock(
 		n.state.LatestBlockHash(),
 		n.state.LatestBlock().Header.Height+1,
+		n.info.Account,
 		n.getPendingTRXsAsArray(),
 	)
 

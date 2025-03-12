@@ -320,9 +320,12 @@ func (n *Node) removeMinedPendingTRXs(block db.Block) {
 }
 
 func (n *Node) getPendingTRXsAsArray() []db.Trx {
-	trxs := make([]db.Trx, 0)
+	trxs := make([]db.Trx, len(n.pendingTRXs))
+
+	var i int
 	for _, trx := range n.pendingTRXs {
-		trxs = append(trxs, trx)
+		trxs[i] = trx
+		i++
 	}
 
 	return trxs

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"sort"
 	"time"
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
@@ -18,7 +19,7 @@ type PendingBlock struct {
 }
 
 func NewPendingBlock(parent db.Hash, height uint64, miner db.Account, trxs []db.Trx) PendingBlock {
-	t := uint64(time.Now().Unix())
+	t := uint64(time.Now().UnixNano())
 	return PendingBlock{parent, height, t, miner, trxs}
 }
 
@@ -26,6 +27,10 @@ func Mine(ctx context.Context, pb PendingBlock) (db.Block, error) {
 	if len(pb.trxs) == 0 {
 		return db.Block{}, fmt.Errorf("mining empty blocks is not allowed")
 	}
+
+	sort.Slice(pb.trxs, func(i, j int) bool {
+		return pb.trxs[i].Time < pb.trxs[j].Time
+	})
 
 	start := time.Now()
 	attempt := 0

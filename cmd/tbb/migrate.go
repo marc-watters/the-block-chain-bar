@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -16,6 +17,24 @@ func migrateCmd() *cobra.Command {
 		Use:   "migrate",
 		Short: "Migrates the blockchain db according to new business rules.",
 		Run: func(cmd *cobra.Command, args []string) {
+			miner, err := cmd.Flags().GetString(flagMiner)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+
+			ip, err := cmd.Flags().GetString(flagIP)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+
+			port, err := cmd.Flags().GetUint64(flagPort)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+
 			state, err := db.NewStateFromDisk(getDataDirFromCmd(cmd))
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
@@ -23,23 +42,37 @@ func migrateCmd() *cobra.Command {
 			}
 			defer state.Close()
 
-			pendingBlock := node.NewPendingBlock(
-				db.Hash{},
-				state.NextBlockHeight(),
+			pn := node.NewPeerNode(
+				node.DefaultIP,
+				node.DefaultHTTPort,
+				true,
 				db.NewAccount("andrej"),
-				[]db.Trx{
-					db.NewTrx("andrej", "andrej", 3, ""),
-					db.NewTrx("andrej", "andrej", 700, "reward"),
-					db.NewTrx("andrej", "babayaga", 2000, ""),
-					db.NewTrx("andrej", "andrej", 100, "reward"),
-					db.NewTrx("babayaga", "andrej", 1, ""),
-					db.NewTrx("babayaga", "caesar", 1000, ""),
-					db.NewTrx("babayaga", "andrej", 50, ""),
-					db.NewTrx("andrej", "andrej", 600, "reward"),
-				},
+				false,
 			)
 
-			if _, err := node.Mine(context.Background(), pendingBlock); err != nil {
+			n := node.New(state, ip, port, db.NewAccount(miner), pn)
+			n.AddPendingTrx(db.NewTrx("andrej", "andrej", 3, ""), pn)
+			n.AddPendingTrx(db.NewTrx("andrej", "babayaga", 2000, ""), pn)
+			n.AddPendingTrx(db.NewTrx("babayaga", "andrej", 1, ""), pn)
+			n.AddPendingTrx(db.NewTrx("babayaga", "caesar", 1000, ""), pn)
+			n.AddPendingTrx(db.NewTrx("babayaga", "andrej", 50, ""), pn)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+			go func() {
+				ticker := time.NewTicker(10 * time.Second)
+
+				for {
+					select {
+					case <-ticker.C:
+						if !n.LatestBlockHash().IsEmpty() {
+							cancel()
+							return
+						}
+					}
+				}
+			}()
+
+			if err := n.Run(ctx); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
@@ -47,6 +80,9 @@ func migrateCmd() *cobra.Command {
 	}
 
 	addDefaultRequiredFlags(migrateCmd)
+	migrateCmd.Flags().String(flagMiner, node.DefaultMiner, "miner account of this node to receive block rewards")
+	migrateCmd.Flags().String(flagIP, node.DefaultIP, "exposed IP for communication with peers")
+	migrateCmd.Flags().Uint64(flagPort, node.DefaultHTTPort, "exposted HTTP port for communication with peers")
 
 	return migrateCmd
 }

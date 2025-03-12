@@ -70,6 +70,7 @@ func trxAddCmd() *cobra.Command {
 			pendingBlock := node.NewPendingBlock(
 				s.LatestBlockHash(),
 				s.NextBlockHeight(),
+				db.NewAccount("andrej"),
 				[]db.Trx{trx},
 			)
 

@@ -25,6 +25,7 @@ func main() {
 	pendingBlock := node.NewPendingBlock(
 		db.Hash{},
 		s.NextBlockHeight(),
+		db.NewAccount("andrej"),
 		[]db.Trx{
 			db.NewTrx("andrej", "andrej", 3, ""),
 			db.NewTrx("andrej", "andrej", 700, "reward"),

@@ -116,6 +116,8 @@ func (n *Node) Run(ctx context.Context) error {
 	}()
 
 	return server.ListenAndServe()
+func (n *Node) LatestBlockHash() db.Hash {
+	return n.state.LatestBlockHash()
 }
 
 func (n *Node) GetBalances(w http.ResponseWriter, r *http.Request) {

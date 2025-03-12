@@ -115,7 +115,13 @@ func (n *Node) Run(ctx context.Context) error {
 		server.Close()
 	}()
 
-	return server.ListenAndServe()
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
+}
+
 func (n *Node) LatestBlockHash() db.Hash {
 	return n.state.LatestBlockHash()
 }

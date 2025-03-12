@@ -250,9 +250,10 @@ func (n *Node) mine(ctx context.Context) error {
 
 					miningCtx, stopCurrentMining = context.WithCancel(ctx)
 
-					err := n.minePendingTRXs(miningCtx)
-					if err != nil {
-						fmt.Println("Error:", err)
+					if err := n.minePendingTRXs(miningCtx); err != nil {
+						if !errors.Is(err, context.Canceled) {
+							fmt.Println("error while mining:", err)
+						}
 					}
 
 					n.isMining = false

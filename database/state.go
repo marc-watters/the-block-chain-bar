@@ -8,6 +8,7 @@ import (
 	"maps"
 	"os"
 	"reflect"
+	"sort"
 
 	"github.com/spf13/afero"
 
@@ -228,6 +229,10 @@ func applyTrx(trx Trx, s *State) error {
 }
 
 func applyTRXs(trxs []Trx, s *State) error {
+	sort.Slice(trxs, func(i, j int) bool {
+		return trxs[i].Time < trxs[j].Time
+	})
+
 	for _, trx := range trxs {
 		err := applyTrx(trx, s)
 		if err != nil {

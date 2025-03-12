@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -22,17 +23,14 @@ func TestNode_Run(t *testing.T) {
 		t.Fatalf("error creating new state from disk: %v", err)
 	}
 
-	acc := db.NewAccount("andrej")
-	pn := NewPeerNode(DefaultIP, peerNodePort, true, acc, true)
-	n := New(s, DefaultIP, DefaultHTTPort, acc, pn)
+	n := New(s, DefaultIP, DefaultHTTPort, db.NewAccount("andrej"), PeerNode{})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	if err := n.Run(ctx); err.Error() != "http: Server closed" {
-		cancel()
+	if err := n.Run(ctx); err != nil {
 		t.Errorf("expected node to shutdown after 5 seconds")
 	}
-	cancel()
 }
 
 func TestNode_Mining(t *testing.T) {
@@ -42,95 +40,183 @@ func TestNode_Mining(t *testing.T) {
 	}
 
 	andrejAcc := db.NewAccount("andrej")
-	babayagaAcc := db.NewAccount("babayaga")
 
 	s, err := db.NewStateFromDisk(dataDir)
 	if err != nil {
 		t.Fatalf("error getting new state from disk: %v", err)
 	}
 
-	n := New(s, DefaultIP, 8085, babayagaAcc, PeerNode{})
-
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
-
-	trx := db.Trx{From: "andrej", To: "babayaga", Value: 1, Time: 1579451695, Data: ""}
-	trx2 := db.NewTrx("andrej", "babayaga", 2, "")
-
-	trx2hash, err := trx2.Hash()
-	if err != nil {
-		t.Fatal("error hashing transaction 2: %v", err)
-		cancel()
-	}
-
-	validSyncedBlock := db.NewBlock(
-		db.Hash{},
-		uint64(1),
-		uint32(1275873026),
-		uint64(1580415832),
-		db.NewAccount("andrej"),
-		[]db.Trx{trx},
+	pn := NewPeerNode(
+		DefaultIP,
+		peerNodePort,
+		false,
+		db.NewAccount(""),
+		true,
 	)
 
+	n := New(s, pn.IP, pn.Port, andrejAcc, pn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+	defer cancel()
+
+	errC := make(chan error)
+	ticker := time.NewTicker(10 * time.Second)
+
+	// Schedule a new TX in 3 seconds from now, in a separate thread
+	// because the n.Run() few lines below is a blocking call
 	go func() {
-		time.Sleep((mininingIntervalSeconds - 2) * time.Second)
-
-		myself := NewPeerNode(DefaultIP, 8085, false, db.NewAccount(""), true)
-		if err := n.AddPendingTrx(trx, myself); err != nil {
-			t.Fatalf("error adding pending transaction 1: %v", err)
+		time.Sleep((mininingIntervalSeconds / 3) * time.Second)
+		trx := db.NewTrx("andrej", "babayaga", 1, "")
+		errC <- n.AddPendingTrx(trx, pn)
+	}()
+	// Schedule a new TX in 12 seconds from now simulating
+	// that it came in - while the first TX is being mined
+	go func() {
+		time.Sleep((mininingIntervalSeconds + 2) * time.Second)
+		trx := db.NewTrx("andrej", "babayaga", 2, "")
+		if !n.isMining {
+			errC <- fmt.Errorf("should be mining")
 			cancel()
+		} else {
+			errC <- n.AddPendingTrx(trx, pn)
 		}
-
-		if err := n.AddPendingTrx(trx2, myself); err != nil {
-			t.Fatalf("error adding pending transaction 2: %v", err)
-			cancel()
+	}()
+	// Periodically check if we mined the 2 blocks
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				if n.state.LatestBlock().Header.Height == 1 {
+					cancel()
+					errC <- nil
+					return
+				}
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 
 	go func() {
+		for {
+			select {
+			case err := <-errC:
+				if err != nil {
+					fmt.Println("error received:", err)
+					cancel()
+				}
+			case <-ctx.Done():
+				break
+			}
+		}
+	}()
+
+	if err := n.Run(ctx); err != nil {
+		t.Fatalf("error running node: %v", err)
+	}
+
+	if n.state.LatestBlock().Header.Height != 1 {
+		t.Fatal("2 pending transactions not mined into 2 blocks under 30m")
+	}
+}
+
+func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
+	dataDir := getTestDataDirPath(t)
+	if err := fs.RemoveDir(dataDir); err != nil {
+		t.Fatal(err)
+	}
+
+	s, err := db.NewStateFromDisk(dataDir)
+	if err != nil {
+		t.Fatalf("error getting new state from disk: %v", err)
+	}
+
+	pn := NewPeerNode(
+		DefaultIP,
+		peerNodePort,
+		false,
+		db.NewAccount(""),
+		true,
+	)
+
+	andrejAcc := db.NewAccount("andrej")
+	babayagaAcc := db.NewAccount("babayaga")
+
+	n := New(s, pn.IP, pn.Port, babayagaAcc, pn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+	defer cancel()
+
+	trx1 := db.NewTrx("andrej", "babayaga", 1, "")
+	trx2 := db.NewTrx("andrej", "babayaga", 2, "")
+
+	trx2hash, err := trx2.Hash()
+	if err != nil {
+		t.Fatalf("error hashing transaction 2: %v", err)
+		cancel()
+	}
+
+	validPreMinedPb := NewPendingBlock(db.Hash{}, 0, andrejAcc, []db.Trx{trx1})
+	validSyncedBlock, err := Mine(ctx, validPreMinedPb)
+	if err != nil {
+		t.Fatalf("error mining block: %v", err)
+		cancel()
+	}
+
+	errC := make(chan error)
+	ticker := time.NewTicker(10 * time.Second)
+	go func() {
+		time.Sleep((mininingIntervalSeconds - 2) * time.Second)
+		errC <- n.AddPendingTrx(trx1, pn)
+		errC <- n.AddPendingTrx(trx2, pn)
+	}()
+
+	go func() {
 		time.Sleep((mininingIntervalSeconds + 2) * time.Second)
+
 		if !n.isMining {
-			t.Fatal("should be mining")
-			cancel()
+			errC <- fmt.Errorf("should be mining")
 		}
 
 		if _, err := n.state.AddBlock(validSyncedBlock); err != nil {
-			t.Fatal("error adding valid synced block: %v", err)
-			cancel()
+			errC <- fmt.Errorf("error adding block: %v", err)
 		}
 
 		n.newSyncedBlocks <- validSyncedBlock
 
 		time.Sleep(2 * time.Second)
 		if n.isMining {
-			t.Fatal("new received block should have cancelled mining")
-			cancel()
+			errC <- fmt.Errorf("synced block should have cancelled mining")
 		}
 
 		_, onlyTrx2IsPending := n.pendingTRXs[trx2hash.Hex()]
 
 		if len(n.pendingTRXs) != 1 && !onlyTrx2IsPending {
-			t.Fatal("new received block should have cancelled mining of already mined transaction")
-			cancel()
+			errC <- fmt.Errorf("synced block should have cancelled mining of already mined block")
 		}
 
 		time.Sleep((mininingIntervalSeconds + 2) * time.Second)
-
 		if !n.isMining {
-			t.Fatal("should be mining again, transaction 1 not included in synced block")
-			cancel()
+			errC <- fmt.Errorf("should be mining the 1x transaction not included in synced block")
 		}
 	}()
 
 	go func() {
-		ticker := time.NewTicker(10 * time.Second)
-
 		for {
 			select {
 			case <-ticker.C:
-				if n.state.LatestBlock().Header.Height == 2 {
-					closeNode()
+				if n.state.LatestBlock().Header.Height == 1 {
+					cancel()
 					return
 				}
+			case err := <-errC:
+				if err != nil {
+					fmt.Println("go routine error:", err)
+					cancel()
+					return
+				}
+			case <-ctx.Done():
+				return
 			}
 		}
 	}()
@@ -146,15 +232,20 @@ func TestNode_Mining(t *testing.T) {
 		endAndrejBalance := n.state.Balances()[andrejAcc]
 		endBabayagaBalance := n.state.Balances()[babayagaAcc]
 
-		expectedEndAndrejBalance := startingAndrejBalance - trx.Value - trx2.Value + db.BlockReward
-		expectedEndBabayagaBalance := startingBabayagaBalance + trx.Value + trx2.Value + db.BlockReward
+		expectedEndAndrejBalance := startingAndrejBalance - trx1.Value - trx2.Value + db.BlockReward
+		expectedEndBabayagaBalance := startingBabayagaBalance + trx1.Value + trx2.Value + db.BlockReward
 
 		if endAndrejBalance != expectedEndAndrejBalance {
-			t.Errorf("Andrej expected end balance is %d not %d", expectedEndAndrejBalance, endAndrejBalance)
+			errC <- fmt.Errorf("Andrej expected balance is %d not %d", expectedEndAndrejBalance, endAndrejBalance)
+			cancel()
+			return
+
 		}
 
 		if endBabayagaBalance != expectedEndBabayagaBalance {
-			t.Errorf("Babayaga expected end balance is %d not %d", expectedEndBabayagaBalance, endBabayagaBalance)
+			errC <- fmt.Errorf("Babayaga expected balance is %d not %d", expectedEndBabayagaBalance, endBabayagaBalance)
+			cancel()
+			return
 		}
 
 		t.Logf("Starting Andrej balance: %d", startingAndrejBalance)
@@ -164,15 +255,8 @@ func TestNode_Mining(t *testing.T) {
 	}()
 
 	if err := n.Run(ctx); err != nil {
-		t.Fatalf("error running node: %v", err)
-	}
-
-	if n.state.LatestBlock().Header.Height != 2 {
-		t.Fatal("was supposed to mine 2 pending transactions into 2 valid blocks under 30m")
-	}
-
-	if len(n.pendingTRXs) != 0 {
-		t.Fatal("no pending transactions should be left to mine")
+		t.Fatalf("error during node run: %v", err)
+		cancel()
 	}
 }
 

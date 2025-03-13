@@ -16,8 +16,11 @@ import (
 )
 
 const (
+	DefaultBootstrapIP   = "node.tbb.web3.coach"
+	DefaultBootstrapPort = 8080
 	DefaultBootstrapAcc  = wallet.AndrejAccount
 	DefaultMiner         = "0x0000000000000000000000000000000000000000"
+
 	DefaultIP      = "127.0.0.1"
 	DefaultHTTPort = 8080
 

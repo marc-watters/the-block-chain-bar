@@ -34,6 +34,23 @@ func runCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
+			bootstrapIP, err := cmd.Flags().GetString(flagBootstrapIP)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+
+			bootstrapPort, err := cmd.Flags().GetUint64(flagBootstrapPort)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+
+			bootstrapAcc, err := cmd.Flags().GetString(flagBootstrapAcc)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
 			s, err := db.NewStateFromDisk(getDataDirFromCmd(cmd))
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error getting new state from disk: %v", err)
@@ -41,10 +58,10 @@ func runCmd() *cobra.Command {
 			}
 
 			bootstrap := node.NewPeerNode(
-				"127.0.0.1",
-				8080,
+				bootstrapIP,
+				bootstrapPort,
 				true,
-				db.NewAccount("andrej"),
+				db.NewAccount(bootstrapAcc),
 				false,
 			)
 
@@ -67,6 +84,9 @@ func runCmd() *cobra.Command {
 	cmd.Flags().String(flagMiner, node.DefaultMiner, "miner account of this node to receive block awards")
 	cmd.Flags().String(flagIP, node.DefaultIP, "exposed HTTP IP address for peer communications")
 	cmd.Flags().Uint64(flagPort, node.DefaultHTTPort, "exposed HTTP port for peer communications")
+	cmd.Flags().String(flagBootstrapIP, node.DefaultBootstrapIP, "default bootstrap server to interconnect peers")
+	cmd.Flags().Uint64(flagBootstrapPort, node.DefaultBootstrapPort, "default bootstrap server port to interconnect peers")
+	cmd.Flags().String(flagBootstrapAcc, node.DefaultBootstrapAcc, "default bootstrap account to interconnect peers")
 
 	return cmd
 }

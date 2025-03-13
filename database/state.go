@@ -10,13 +10,14 @@ import (
 	"reflect"
 	"sort"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/afero"
 
 	"github.com/marc-watters/the-block-chain-bar/v2/fs"
 )
 
 type State struct {
-	balances        map[Account]uint64
+	balances        map[common.Address]uint64
 	latestBlock     Block
 	latestBlockHash Hash
 	hasGenesisBlock bool
@@ -33,7 +34,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 	}
 
 	s := &State{
-		balances:        make(map[Account]uint64),
+		balances:        make(map[common.Address]uint64),
 		latestBlock:     Block{},
 		latestBlockHash: Hash{},
 		hasGenesisBlock: false,
@@ -151,7 +152,7 @@ func (s *State) NextBlockHeight() uint64 {
 	return s.latestBlock.Header.Height + 1
 }
 
-func (s *State) Balances() map[Account]uint64 {
+func (s *State) Balances() map[common.Address]uint64 {
 	return s.balances
 }
 
@@ -164,7 +165,7 @@ func (s *State) copy() State {
 	c.latestBlock = s.latestBlock
 	c.latestBlockHash = s.latestBlockHash
 	c.hasGenesisBlock = s.hasGenesisBlock
-	c.balances = make(map[Account]uint64)
+	c.balances = make(map[common.Address]uint64)
 
 	maps.Copy(c.balances, s.balances)
 
@@ -208,10 +209,10 @@ func applyBlock(b Block, s *State) error {
 }
 
 func applyTrx(trx Trx, s *State) error {
-	if trx.From == "" {
+	if len(trx.From) == 0 {
 		return NewInvalidTransaction("From")
 	}
-	if trx.To == "" {
+	if len(trx.To) == 0 {
 		return NewInvalidTransaction("To")
 	}
 	if trx.Value == 0 {

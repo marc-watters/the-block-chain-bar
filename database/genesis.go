@@ -3,11 +3,13 @@ package database
 import (
 	"encoding/json"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/marc-watters/the-block-chain-bar/v2/fs"
 )
 
 type genesis struct {
-	Balances map[Account]uint64 `json:"balances"`
+	Balances map[common.Address]uint64 `json:"balances"`
 }
 
 func loadGenesis(path string) (genesis, error) {

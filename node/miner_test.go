@@ -6,7 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
+	"github.com/marc-watters/the-block-chain-bar/v2/wallet"
 )
 
 func TestValidBlockHash(t *testing.T) {
@@ -41,7 +44,7 @@ func TestInvalidBlockHash(t *testing.T) {
 }
 
 func TestMine(t *testing.T) {
-	miner := db.NewAccount("andrej")
+	miner := db.NewAccount(wallet.AndrejAccount)
 	pendingBlock := createRandomPendingBlock(miner)
 
 	ctx := context.Background()
@@ -66,7 +69,7 @@ func TestMine(t *testing.T) {
 }
 
 func TestMineWithTimeout(t *testing.T) {
-	miner := db.NewAccount("andrej")
+	miner := db.NewAccount(wallet.AndrejAccount)
 	pendingBlock := createRandomPendingBlock(miner)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Microsecond)
@@ -78,13 +81,13 @@ func TestMineWithTimeout(t *testing.T) {
 	cancel()
 }
 
-func createRandomPendingBlock(miner db.Account) PendingBlock {
+func createRandomPendingBlock(miner common.Address) PendingBlock {
 	return NewPendingBlock(
 		db.Hash{},
 		1,
 		miner,
 		[]db.Trx{
-			db.NewTrx("andrej", "andrej", 3, ""),
-			db.NewTrx("andrej", "andrej", 700, ""),
+			db.NewTrx(db.NewAccount(wallet.AndrejAccount), db.NewAccount(wallet.AndrejAccount), 3, ""),
+			db.NewTrx(db.NewAccount(wallet.AndrejAccount), db.NewAccount(wallet.AndrejAccount), 700, ""),
 		})
 }

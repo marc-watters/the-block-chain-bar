@@ -8,6 +8,7 @@ import (
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 	"github.com/marc-watters/the-block-chain-bar/v2/fs"
+	"github.com/marc-watters/the-block-chain-bar/v2/wallet"
 )
 
 const peerNodePort = 8081
@@ -23,7 +24,7 @@ func TestNode_Run(t *testing.T) {
 		t.Fatalf("error creating new state from disk: %v", err)
 	}
 
-	n := New(s, DefaultIP, DefaultHTTPort, db.NewAccount("andrej"), PeerNode{})
+	n := New(s, DefaultIP, DefaultHTTPort, db.NewAccount(wallet.AndrejAccount), PeerNode{})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -39,7 +40,8 @@ func TestNode_Mining(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	andrejAcc := db.NewAccount("andrej")
+	andrejAcc := db.NewAccount(wallet.AndrejAccount)
+	babayagaAcc := db.NewAccount(wallet.BabayagaAccount)
 
 	s, err := db.NewStateFromDisk(dataDir)
 	if err != nil {
@@ -66,14 +68,14 @@ func TestNode_Mining(t *testing.T) {
 	// because the n.Run() few lines below is a blocking call
 	go func() {
 		time.Sleep((mininingIntervalSeconds / 3) * time.Second)
-		trx := db.NewTrx("andrej", "babayaga", 1, "")
+		trx := db.NewTrx(andrejAcc, babayagaAcc, 1, "")
 		errC <- n.AddPendingTrx(trx, pn)
 	}()
 	// Schedule a new TX in 12 seconds from now simulating
 	// that it came in - while the first TX is being mined
 	go func() {
 		time.Sleep((mininingIntervalSeconds + 2) * time.Second)
-		trx := db.NewTrx("andrej", "babayaga", 2, "")
+		trx := db.NewTrx(andrejAcc, babayagaAcc, 2, "")
 		if !n.isMining {
 			errC <- fmt.Errorf("should be mining")
 			cancel()
@@ -147,8 +149,8 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
 
-	trx1 := db.NewTrx("andrej", "babayaga", 1, "")
-	trx2 := db.NewTrx("andrej", "babayaga", 2, "")
+	trx1 := db.NewTrx(andrejAcc, babayagaAcc, 1, "")
+	trx2 := db.NewTrx(andrejAcc, babayagaAcc, 2, "")
 
 	trx2hash, err := trx2.Hash()
 	if err != nil {

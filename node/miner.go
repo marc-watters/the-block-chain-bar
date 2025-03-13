@@ -7,6 +7,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 )
 
@@ -14,11 +16,11 @@ type PendingBlock struct {
 	parent db.Hash
 	height uint64
 	time   uint64
-	miner  db.Account
+	miner  common.Address
 	trxs   []db.Trx
 }
 
-func NewPendingBlock(parent db.Hash, height uint64, miner db.Account, trxs []db.Trx) PendingBlock {
+func NewPendingBlock(parent db.Hash, height uint64, miner common.Address, trxs []db.Trx) PendingBlock {
 	t := uint64(time.Now().UnixNano())
 	return PendingBlock{parent, height, t, miner, trxs}
 }
@@ -65,11 +67,11 @@ func Mine(ctx context.Context, pb PendingBlock) (db.Block, error) {
 	}
 
 	fmt.Printf("\nMined new Block '%x' using PoW🎉🎉🎉:\n", hash)
-	fmt.Printf("\tHeight: '%v'\n", pb.height)
-	fmt.Printf("\tNonce: '%v'\n", nonce)
-	fmt.Printf("\tCreated: '%v'\n", pb.time)
-	fmt.Printf("\tMiner '%v'\n", pb.miner)
-	fmt.Printf("\tParent: '%v'\n\n", pb.parent.Hex())
+	fmt.Printf("\tHeight: '%v'\n", block.Header.Height)
+	fmt.Printf("\tNonce: '%v'\n", block.Header.Nonce)
+	fmt.Printf("\tCreated: '%v'\n", block.Header.Time)
+	fmt.Printf("\tMiner '%v'\n", block.Header.Miner.String())
+	fmt.Printf("\tParent: '%v'\n\n", block.Header.Parent.Hex())
 
 	fmt.Printf("\tAttempt: '%v'\n", attempt)
 	fmt.Printf("\tTime: %s\n\n", time.Since(start))

@@ -7,22 +7,24 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 )
 
 type (
 	BalanceRes struct {
-		Hash     db.Hash               `json:"block_hash"`
-		Balances map[db.Account]uint64 `json:"balances"`
+		Hash     db.Hash                   `json:"block_hash"`
+		Balances map[common.Address]uint64 `json:"balances"`
 	}
 	ErrRes struct {
 		Error string `json:"error"`
 	}
 	TrxPostReq struct {
-		From  db.Account `json:"from"`
-		To    db.Account `json:"to"`
-		Value uint64     `json:"value"`
-		Data  string     `json:"data"`
+		From  common.Address `json:"from"`
+		To    common.Address `json:"to"`
+		Value uint64         `json:"value"`
+		Data  string         `json:"data"`
 	}
 	TrxPostRes struct {
 		Success bool `json:"success"`

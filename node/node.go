@@ -10,13 +10,16 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 )
 
 const (
+	DefaultBootstrapAcc  = wallet.AndrejAccount
+	DefaultMiner         = "0x0000000000000000000000000000000000000000"
 	DefaultIP      = "127.0.0.1"
 	DefaultHTTPort = 8080
-	DefaultMiner   = ""
 
 	endpointBalances              = "/balances/list"
 	endpointPostTrx               = "/trx/add"
@@ -49,20 +52,20 @@ type (
 		LatestBlock() db.Block
 		LatestBlockHash() db.Hash
 		NextBlockHeight() uint64
-		Balances() map[db.Account]uint64
+		Balances() map[common.Address]uint64
 		DataDir() string
 	}
 	PeerNode struct {
-		IP         string     `json:"ip"`
-		Port       uint64     `json:"port"`
-		IsBoostrap bool       `json:"is_bootstrap"`
-		Account    db.Account `json:"account"`
+		IP         string         `json:"ip"`
+		Port       uint64         `json:"port"`
+		IsBoostrap bool           `json:"is_bootstrap"`
+		Account    common.Address `json:"account"`
 
 		connected bool
 	}
 )
 
-func New(s state, ip string, port uint64, acc db.Account, bootstrap PeerNode) *Node {
+func New(s state, ip string, port uint64, acc common.Address, bootstrap PeerNode) *Node {
 	knownPeers := map[string]PeerNode{
 		bootstrap.Address(): bootstrap,
 	}
@@ -79,7 +82,7 @@ func New(s state, ip string, port uint64, acc db.Account, bootstrap PeerNode) *N
 	}
 }
 
-func NewPeerNode(ip string, port uint64, isBootstrap bool, acc db.Account, connected bool) PeerNode {
+func NewPeerNode(ip string, port uint64, isBootstrap bool, acc common.Address, connected bool) PeerNode {
 	return PeerNode{ip, port, isBootstrap, acc, connected}
 }
 
@@ -259,6 +262,7 @@ func (n *Node) mine(ctx context.Context) error {
 
 					if err := n.minePendingTRXs(miningCtx); err != nil {
 						if !errors.Is(err, context.Canceled) {
+							fmt.Println("ERROR:", err)
 							fmt.Println("error while mining:", err)
 						}
 					}

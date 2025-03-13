@@ -3,27 +3,28 @@ package database
 import (
 	"crypto/sha256"
 	"encoding/json"
-	"strings"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type (
 	Account string
 
 	Trx struct {
-		From  Account `json:"from"`
-		To    Account `json:"to"`
-		Value uint64  `json:"value"`
-		Data  string  `json:"data"`
-		Time  uint64  `json:"time"`
+		From  common.Address `json:"from"`
+		To    common.Address `json:"to"`
+		Value uint64         `json:"value"`
+		Data  string         `json:"data"`
+		Time  uint64         `json:"time"`
 	}
 )
 
-func NewAccount(value string) Account {
-	return Account(strings.ToLower(value))
+func NewAccount(value string) common.Address {
+	return common.HexToAddress(value)
 }
 
-func NewTrx(from Account, to Account, value uint64, data string) Trx {
+func NewTrx(from common.Address, to common.Address, value uint64, data string) Trx {
 	return Trx{from, to, value, data, uint64(time.Now().UnixNano())}
 }
 

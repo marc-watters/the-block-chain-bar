@@ -7,6 +7,7 @@ import (
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 	"github.com/marc-watters/the-block-chain-bar/v2/node"
+	"github.com/marc-watters/the-block-chain-bar/v2/wallet"
 )
 
 func main() {
@@ -22,19 +23,23 @@ func main() {
 	}
 	defer s.Close()
 
+	andrej := db.NewAccount(wallet.AndrejAccount)
+	babayaga := db.NewAccount(wallet.BabayagaAccount)
+	ceasar := db.NewAccount(wallet.CeasarAccount)
+
 	pendingBlock := node.NewPendingBlock(
 		db.Hash{},
 		s.NextBlockHeight(),
-		db.NewAccount("andrej"),
+		andrej,
 		[]db.Trx{
-			db.NewTrx("andrej", "andrej", 3, ""),
-			db.NewTrx("andrej", "andrej", 700, "reward"),
-			db.NewTrx("andrej", "babayaga", 2000, ""),
-			db.NewTrx("andrej", "andrej", 100, "reward"),
-			db.NewTrx("babayaga", "andrej", 1, ""),
-			db.NewTrx("babayaga", "caesar", 1000, ""),
-			db.NewTrx("babayaga", "andrej", 50, ""),
-			db.NewTrx("andrej", "andrej", 600, "reward"),
+			db.NewTrx(andrej, andrej, 3, ""),
+			db.NewTrx(andrej, andrej, 700, "reward"),
+			db.NewTrx(andrej, babayaga, 2000, ""),
+			db.NewTrx(andrej, andrej, 100, "reward"),
+			db.NewTrx(babayaga, andrej, 1, ""),
+			db.NewTrx(babayaga, ceasar, 1000, ""),
+			db.NewTrx(babayaga, andrej, 50, ""),
+			db.NewTrx(andrej, andrej, 600, "reward"),
 		},
 	)
 

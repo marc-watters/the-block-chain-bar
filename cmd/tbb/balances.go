@@ -46,8 +46,8 @@ func balancesListCmd() *cobra.Command {
 			fmt.Printf("%s\n", strings.Repeat("-", 72))
 
 			w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', 0)
-			for k, v := range s.Balances() {
-				fmt.Fprintf(w, " |>\t%s\t%d\n", k, v)
+			for account, balance := range s.Balances() {
+				fmt.Fprintf(w, " |>\t%s\t%d\n", account.String(), balance)
 			}
 			w.Flush()
 

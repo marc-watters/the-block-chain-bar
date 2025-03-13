@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
+	"github.com/marc-watters/the-block-chain-bar/v2/wallet"
 )
 
 const (

@@ -10,6 +10,7 @@ import (
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 	"github.com/marc-watters/the-block-chain-bar/v2/node"
+	"github.com/marc-watters/the-block-chain-bar/v2/wallet"
 )
 
 func migrateCmd() *cobra.Command {
@@ -42,32 +43,33 @@ func migrateCmd() *cobra.Command {
 			}
 			defer state.Close()
 
+			andrej := db.NewAccount(wallet.AndrejAccount)
+			babayaga := db.NewAccount(wallet.BabayagaAccount)
+			ceasar := db.NewAccount(wallet.CeasarAccount)
+
 			pn := node.NewPeerNode(
 				node.DefaultIP,
 				node.DefaultHTTPort,
 				true,
-				db.NewAccount("andrej"),
+				andrej,
 				false,
 			)
 
 			n := node.New(state, ip, port, db.NewAccount(miner), pn)
-			n.AddPendingTrx(db.NewTrx("andrej", "andrej", 3, ""), pn)
-			n.AddPendingTrx(db.NewTrx("andrej", "babayaga", 2000, ""), pn)
-			n.AddPendingTrx(db.NewTrx("babayaga", "andrej", 1, ""), pn)
-			n.AddPendingTrx(db.NewTrx("babayaga", "caesar", 1000, ""), pn)
-			n.AddPendingTrx(db.NewTrx("babayaga", "andrej", 50, ""), pn)
+			n.AddPendingTrx(db.NewTrx(andrej, andrej, 3, ""), pn)
+			n.AddPendingTrx(db.NewTrx(andrej, babayaga, 2000, ""), pn)
+			n.AddPendingTrx(db.NewTrx(babayaga, andrej, 1, ""), pn)
+			n.AddPendingTrx(db.NewTrx(babayaga, ceasar, 1000, ""), pn)
+			n.AddPendingTrx(db.NewTrx(babayaga, andrej, 50, ""), pn)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+			ticker := time.NewTicker(10 * time.Second)
 			go func() {
-				ticker := time.NewTicker(10 * time.Second)
-
-				for {
-					select {
-					case <-ticker.C:
-						if !n.LatestBlockHash().IsEmpty() {
-							cancel()
-							return
-						}
+				for range ticker.C {
+					if !n.LatestBlockHash().IsEmpty() {
+						ticker.Stop()
+						cancel()
+						return
 					}
 				}
 			}()

@@ -4,15 +4,19 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/marc-watters/the-block-chain-bar/v2/fs"
 	"github.com/spf13/cobra"
+
+	"github.com/marc-watters/the-block-chain-bar/v2/fs"
 )
 
 const (
-	flagDataDir = "datadir"
-	flagMiner   = "miner"
-	flagIP      = "ip"
-	flagPort    = "port"
+	flagDataDir       = "datadir"
+	flagMiner         = "miner"
+	flagIP            = "ip"
+	flagPort          = "port"
+	flagBootstrapAcc  = "bootstrap-account"
+	flagBootstrapIP   = "bootstrap-ip"
+	flagBootstrapPort = "bootstrap-port"
 )
 
 func main() {
@@ -30,6 +34,7 @@ func main() {
 		trxCmd(),
 		runCmd(),
 		migrateCmd(),
+		walletCmd(),
 		versionCmd(),
 	)
 

@@ -8,9 +8,9 @@ import (
 
 const (
 	Major  = "0"
-	Minor  = "11"
+	Minor  = "12"
 	Fix    = "0"
-	Verbal = "Crypto Authentication"
+	Verbal = "Digital signatures"
 )
 
 func versionCmd() *cobra.Command {

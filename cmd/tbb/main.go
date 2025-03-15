@@ -31,9 +31,7 @@ func main() {
 
 	tbbCmd.AddCommand(
 		balancesCmd(),
-		trxCmd(),
 		runCmd(),
-		migrateCmd(),
 		walletCmd(),
 		versionCmd(),
 	)

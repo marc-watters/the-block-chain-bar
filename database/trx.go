@@ -1,11 +1,13 @@
 package database
 
 import (
+	"crypto/elliptic"
 	"crypto/sha256"
 	"encoding/json"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 type (
@@ -47,6 +49,10 @@ func (t Trx) Hash() (Hash, error) {
 	}
 
 	return sha256.Sum256(trxJSON), nil
+}
+
+func (t Trx) Encode() ([]byte, error) {
+	return json.Marshal(t)
 }
 
 func (st SignedTrx) Hash() (Hash, error) {

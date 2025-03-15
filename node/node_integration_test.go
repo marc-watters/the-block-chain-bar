@@ -2,19 +2,49 @@ package node
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 	"github.com/marc-watters/the-block-chain-bar/v2/fs"
 	"github.com/marc-watters/the-block-chain-bar/v2/wallet"
 )
 
-const peerNodePort = 8081
+// The password for testing keystore files:
+//
+//	./test_andrej--3eb92807f1f91a8d4d85bc908c7f86dcddb1df57
+//	./test_babayaga--6fdc0d8d15ae6b4ebf45c52fd2aafbcbb19a65c8
+//
+// Pre-generated for testing purposes using wallet_test.go.
+//
+// It's necessary to have pre-existing accounts before a new node
+// with fresh new, empty keystore is initialized and booted in order
+// to configure the accounts balances in genesis.json
+//
+// I.e: A quick solution to a chicken-egg problem.
+const (
+	testKsAndrejAccount   = "0x3eb92807f1f91a8d4d85bc908c7f86dcddb1df57"
+	testKsBabaYagaAccount = "0x6fdc0d8d15ae6b4ebf45c52fd2aafbcbb19a65c8"
+	testKsAndrejFile      = "test_andrej--3eb92807f1f91a8d4d85bc908c7f86dcddb1df57"
+	testKsBabaYagaFile    = "test_babayaga--6fdc0d8d15ae6b4ebf45c52fd2aafbcbb19a65c8"
+	testKsAccountsPwd     = "security123"
+
+	peerNodePort = 8081
+)
 
 func TestNode_Run(t *testing.T) {
-	dataDir := getTestDataDirPath(t)
+	dataDir, err := getTestDataDirPath()
+	if err != nil {
+		t.Fatalf("error getting test data directory path: %v", err)
+	}
+
 	if err := fs.RemoveDir(dataDir); err != nil {
 		t.Fatalf("error cleansing data directory: %v", err)
 	}
@@ -35,28 +65,25 @@ func TestNode_Run(t *testing.T) {
 }
 
 func TestNode_Mining(t *testing.T) {
-	dataDir := getTestDataDirPath(t)
-	if err := fs.RemoveDir(dataDir); err != nil {
-		t.Fatal(err)
+	dataDir, andrej, babayaga, err := setupTestNodeDir()
+	if err != nil {
+		t.Fatalf("error setting up test node directory: %v", err)
 	}
 
-	andrejAcc := db.NewAccount(wallet.AndrejAccount)
-	babayagaAcc := db.NewAccount(wallet.BabayagaAccount)
+	pn := NewPeerNode(
+		"127.0.0.1",
+		8085,
+		false,
+		babayaga,
+		true,
+	)
 
 	s, err := db.NewStateFromDisk(dataDir)
 	if err != nil {
 		t.Fatalf("error getting new state from disk: %v", err)
 	}
 
-	pn := NewPeerNode(
-		DefaultIP,
-		peerNodePort,
-		false,
-		db.NewAccount(""),
-		true,
-	)
-
-	n := New(s, pn.IP, pn.Port, andrejAcc, pn)
+	n := New(s, pn.IP, pn.Port, andrej, pn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
@@ -68,20 +95,23 @@ func TestNode_Mining(t *testing.T) {
 	// because the n.Run() few lines below is a blocking call
 	go func() {
 		time.Sleep((mininingIntervalSeconds / 3) * time.Second)
-		trx := db.NewTrx(andrejAcc, babayagaAcc, 1, "")
-		errC <- n.AddPendingTrx(trx, pn)
+		trx := db.NewTrx(andrej, babayaga, 1, "")
+		signedTrx, err := wallet.SignTrxWithKeystoreAccount(trx, andrej, testKsAccountsPwd, wallet.GetKeystoreDirPath(dataDir))
+		if err != nil {
+			errC <- fmt.Errorf("error creating new signed transaction: %v", err)
+		}
+		errC <- n.AddPendingTrx(signedTrx, pn)
 	}()
 	// Schedule a new TX in 12 seconds from now simulating
 	// that it came in - while the first TX is being mined
 	go func() {
 		time.Sleep((mininingIntervalSeconds + 2) * time.Second)
-		trx := db.NewTrx(andrejAcc, babayagaAcc, 2, "")
-		if !n.isMining {
-			errC <- fmt.Errorf("should be mining")
-			cancel()
-		} else {
-			errC <- n.AddPendingTrx(trx, pn)
+		trx := db.NewTrx(andrej, babayaga, 2, "")
+		signedTrx, err := wallet.SignTrxWithKeystoreAccount(trx, andrej, testKsAccountsPwd, wallet.GetKeystoreDirPath(dataDir))
+		if err != nil {
+			errC <- fmt.Errorf("error creating new signed transaction: %v", err)
 		}
+		errC <- n.AddPendingTrx(signedTrx, pn)
 	}()
 	// Periodically check if we mined the 2 blocks
 	go func() {
@@ -122,10 +152,43 @@ func TestNode_Mining(t *testing.T) {
 	}
 }
 
+// The test logic summary:
+//   - BabaYaga runs the node
+//   - BabaYaga tries to mine 2 TXs
+//   - The mining gets interrupted because a new block from Andrej gets synced
+//   - Andrej will get the block reward for this synced block
+//   - The synced block contains 1 of the TXs BabaYaga tried to mine
+//   - BabaYaga tries to mine 1 TX left
+//   - BabaYaga succeeds and gets her block reward
 func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
-	dataDir := getTestDataDirPath(t)
-	if err := fs.RemoveDir(dataDir); err != nil {
-		t.Fatal(err)
+	andrej := db.NewAccount(testKsAndrejAccount)
+	babayaga := db.NewAccount(testKsBabaYagaAccount)
+
+	dataDir, err := getTestDataDirPath()
+	if err != nil {
+		t.Fatalf("error getting test data directory path: %v", err)
+	}
+
+	genesisBalances := make(map[common.Address]uint64)
+	genesisBalances[andrej] = 1000000
+	genesis := db.Genesis{Balances: genesisBalances}
+	genesisJSON, err := json.Marshal(genesis)
+	if err != nil {
+		t.Fatalf("error marshalling genesis: %v", err)
+	}
+
+	if err := fs.InitDataDirIfNotExists(dataDir, genesisJSON); err != nil {
+		t.Fatalf("error initializing data directory: %v", err)
+	}
+	defer func() {
+		err := fs.RemoveDir(dataDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error removing data directory: %v", err)
+		}
+	}()
+
+	if err := copyKeystoreFilesIntoTestDataDirPath(dataDir); err != nil {
+		t.Fatalf("error copying keystore files: %v", err)
 	}
 
 	s, err := db.NewStateFromDisk(dataDir)
@@ -141,16 +204,23 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 		true,
 	)
 
-	andrejAcc := db.NewAccount("andrej")
-	babayagaAcc := db.NewAccount("babayaga")
-
-	n := New(s, pn.IP, pn.Port, babayagaAcc, pn)
+	n := New(s, pn.IP, pn.Port, babayaga, pn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
 
-	trx1 := db.NewTrx(andrejAcc, babayagaAcc, 1, "")
-	trx2 := db.NewTrx(andrejAcc, babayagaAcc, 2, "")
+	trx1 := db.NewTrx(andrej, babayaga, 1, "")
+	trx2 := db.NewTrx(andrej, babayaga, 2, "")
+
+	signedTrx1, err := wallet.SignTrxWithKeystoreAccount(trx1, andrej, testKsAccountsPwd, wallet.GetKeystoreDirPath(dataDir))
+	if err != nil {
+		t.Fatalf("error signing transaction 1 for andrej: %v", err)
+	}
+
+	signedTrx2, err := wallet.SignTrxWithKeystoreAccount(trx1, andrej, testKsAccountsPwd, wallet.GetKeystoreDirPath(dataDir))
+	if err != nil {
+		t.Fatalf("error signing transaction 2 for babyaga: %v", err)
+	}
 
 	trx2hash, err := trx2.Hash()
 	if err != nil {
@@ -158,7 +228,7 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 		cancel()
 	}
 
-	validPreMinedPb := NewPendingBlock(db.Hash{}, 0, andrejAcc, []db.Trx{trx1})
+	validPreMinedPb := NewPendingBlock(db.Hash{}, 0, andrej, []db.SignedTrx{signedTrx1})
 	validSyncedBlock, err := Mine(ctx, validPreMinedPb)
 	if err != nil {
 		t.Fatalf("error mining block: %v", err)
@@ -169,8 +239,8 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 	ticker := time.NewTicker(10 * time.Second)
 	go func() {
 		time.Sleep((mininingIntervalSeconds - 2) * time.Second)
-		errC <- n.AddPendingTrx(trx1, pn)
-		errC <- n.AddPendingTrx(trx2, pn)
+		errC <- n.AddPendingTrx(signedTrx1, pn)
+		errC <- n.AddPendingTrx(signedTrx2, pn)
 	}()
 
 	go func() {
@@ -226,13 +296,13 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 	go func() {
 		time.Sleep(2 * time.Second)
 
-		startingAndrejBalance := n.state.Balances()[andrejAcc]
-		startingBabayagaBalance := n.state.Balances()[babayagaAcc]
+		startingAndrejBalance := n.state.Balances()[andrej]
+		startingBabayagaBalance := n.state.Balances()[babayaga]
 
 		<-ctx.Done()
 
-		endAndrejBalance := n.state.Balances()[andrejAcc]
-		endBabayagaBalance := n.state.Balances()[babayagaAcc]
+		endAndrejBalance := n.state.Balances()[andrej]
+		endBabayagaBalance := n.state.Balances()[babayaga]
 
 		expectedEndAndrejBalance := startingAndrejBalance - trx1.Value - trx2.Value + db.BlockReward
 		expectedEndBabayagaBalance := startingBabayagaBalance + trx1.Value + trx2.Value + db.BlockReward
@@ -262,12 +332,90 @@ func TestNode_MiningStopsOnNewSyncedBlock(t *testing.T) {
 	}
 }
 
-func getTestDataDirPath(t testing.TB) string {
-	t.Helper()
+func getTestDataDirPath() (string, error) {
+	return fs.AppFS.TempDir(os.TempDir(), "tbb_test")
+}
 
-	dir, err := fs.AppFS.TempDir("./", ".tbb_test")
+// Copy the pre-generated, commited keystore files from this folder into the new testDataDirPath()
+//
+// Afterwards the test datadir path will look like:
+//
+//	"/tmp/tbb_test945924586/keystore/test_andrej--3eb92807f1f91a8d4d85bc908c7f86dcddb1df57"
+//	"/tmp/tbb_test945924586/keystore/test_babayaga--6fdc0d8d15ae6b4ebf45c52fd2aafbcbb19a65c8"
+func copyKeystoreFilesIntoTestDataDirPath(dataDir string) error {
+	andrejSrcKs, err := fs.AppFS.Open(testKsAndrejFile)
 	if err != nil {
-		t.Fatalf("error creating temp directory: %v", err)
+		return err
 	}
-	return dir
+	defer andrejSrcKs.Close()
+
+	ksDir := filepath.Join(wallet.GetKeystoreDirPath(dataDir))
+
+	err = os.Mkdir(ksDir, 0777)
+	if err != nil {
+		return err
+	}
+
+	andrejDstKs, err := os.Create(filepath.Join(ksDir, testKsAndrejFile))
+	if err != nil {
+		return err
+	}
+	defer andrejDstKs.Close()
+
+	_, err = io.Copy(andrejDstKs, andrejSrcKs)
+	if err != nil {
+		return err
+	}
+
+	babayagaSrcKs, err := os.Open(testKsBabaYagaFile)
+	if err != nil {
+		return err
+	}
+	defer babayagaSrcKs.Close()
+
+	babayagaDstKs, err := os.Create(filepath.Join(ksDir, testKsBabaYagaFile))
+	if err != nil {
+		return err
+	}
+	defer babayagaDstKs.Close()
+
+	_, err = io.Copy(babayagaDstKs, babayagaSrcKs)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// setupTestNodeDir creates a default testing node directory with 2 keystore accounts
+// Remember to remove the dir once test finishes: defer fs.RemoveDir(dataDir)
+func setupTestNodeDir() (dataDir string, andrej, babaYaga common.Address, err error) {
+	babaYaga = db.NewAccount(testKsBabaYagaAccount)
+	andrej = db.NewAccount(testKsAndrejAccount)
+
+	dataDir, err = getTestDataDirPath()
+	if err != nil {
+		return "", common.Address{}, common.Address{}, fmt.Errorf("getting test data directory failed: %w", err)
+	}
+	fmt.Println("datadir", dataDir)
+
+	genesisBalances := make(map[common.Address]uint64)
+	genesisBalances[andrej] = 1000000
+	genesis := db.Genesis{Balances: genesisBalances}
+	genesisJson, err := json.Marshal(genesis)
+	if err != nil {
+		return "", common.Address{}, common.Address{}, fmt.Errorf("marshalling genesis failed: %w", err)
+	}
+
+	err = fs.InitDataDirIfNotExists(dataDir, genesisJson)
+	if err != nil {
+		return "", common.Address{}, common.Address{}, fmt.Errorf("initializing data directory failed: %w", err)
+	}
+
+	err = copyKeystoreFilesIntoTestDataDirPath(dataDir)
+	if err != nil {
+		return "", common.Address{}, common.Address{}, fmt.Errorf("copying key store failed: %w", err)
+	}
+
+	return dataDir, andrej, babaYaga, nil
 }

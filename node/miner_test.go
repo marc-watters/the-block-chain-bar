@@ -2,11 +2,15 @@ package node
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"encoding/hex"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	db "github.com/marc-watters/the-block-chain-bar/v2/database"
 	"github.com/marc-watters/the-block-chain-bar/v2/wallet"
@@ -44,8 +48,15 @@ func TestInvalidBlockHash(t *testing.T) {
 }
 
 func TestMine(t *testing.T) {
-	miner := db.NewAccount(wallet.AndrejAccount)
-	pendingBlock := createRandomPendingBlock(miner)
+	minerPrivKey, _, miner, err := generateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pendingBlock, err := createRandomPendingBlock(minerPrivKey, miner)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ctx := context.Background()
 
@@ -69,25 +80,49 @@ func TestMine(t *testing.T) {
 }
 
 func TestMineWithTimeout(t *testing.T) {
-	miner := db.NewAccount(wallet.AndrejAccount)
-	pendingBlock := createRandomPendingBlock(miner)
+	minerPrivKey, _, miner, err := generateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pendingBlock, err := createRandomPendingBlock(minerPrivKey, miner)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Microsecond)
+	defer cancel()
 
 	if _, err := Mine(ctx, pendingBlock); err == nil {
 		t.Errorf("expected timeout error mining block: %v", err)
-		cancel()
 	}
-	cancel()
 }
 
-func createRandomPendingBlock(miner common.Address) PendingBlock {
+func generateKey() (*ecdsa.PrivateKey, ecdsa.PublicKey, common.Address, error) {
+	privKey, err := ecdsa.GenerateKey(crypto.S256(), rand.Reader)
+	if err != nil {
+		return nil, ecdsa.PublicKey{}, common.Address{}, err
+	}
+
+	pubKey := privKey.PublicKey
+	pubKeyBytes := elliptic.Marshal(crypto.S256(), pubKey.X, pubKey.Y)
+	pubKeyBytesHash := crypto.Keccak256(pubKeyBytes[1:])
+
+	account := common.BytesToAddress(pubKeyBytesHash[12:])
+
+	return privKey, pubKey, account, nil
+}
+
+func createRandomPendingBlock(privKey *ecdsa.PrivateKey, acc common.Address) (PendingBlock, error) {
+	trx := db.NewTrx(acc, db.NewAccount(testKsBabaYagaAccount), 1, "")
+	signedTrx, err := wallet.SignTrx(trx, privKey)
+	if err != nil {
+		return PendingBlock{}, err
+	}
+
 	return NewPendingBlock(
 		db.Hash{},
-		1,
-		miner,
-		[]db.Trx{
-			db.NewTrx(db.NewAccount(wallet.AndrejAccount), db.NewAccount(wallet.AndrejAccount), 3, ""),
-			db.NewTrx(db.NewAccount(wallet.AndrejAccount), db.NewAccount(wallet.AndrejAccount), 700, ""),
-		})
+		0, acc,
+		[]db.SignedTrx{signedTrx},
+	), nil
 }

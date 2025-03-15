@@ -2,19 +2,22 @@ package wallet
 
 import (
 	"crypto/ecdsa"
+	"crypto/sha256"
 	"fmt"
 	"path/filepath"
 
+	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	db "github.com/marc-watters/the-block-chain-bar/v2/database"
+	"github.com/marc-watters/the-block-chain-bar/v2/fs"
 )
 
 const (
 	keystoreDirName = "keystore"
 	AndrejAccount   = "0x22ba1F80452E6220c7cc6ea2D1e3EEDDaC5F694A"
-	BabayagaAccount = "0x21973d33e048f5ce006fd7b41f51725c30e4b76b"
-	CeasarAccount   = "0x84470a31D271ea400f34e7A697F36bE0e866a716"
 )
 
 func NewKeystoreAccount(dataDir, password string) (common.Address, error) {

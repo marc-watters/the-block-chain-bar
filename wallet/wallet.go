@@ -27,12 +27,52 @@ func NewKeystoreAccount(dataDir, password string) (common.Address, error) {
 	return acc.Address, nil
 }
 
-func SignTrxWithKeystoreAccount(trx db.Trx, acc common.Address, pwd string) {}
+func SignTrxWithKeystoreAccount(
+	trx db.Trx, acc common.Address,
+	pwd, keystoreDir string,
+) (db.SignedTrx, error) {
+	ks := keystore.NewKeyStore(keystoreDir, keystore.StandardScryptN, keystore.StandardScryptP)
+	ksAccount, err := ks.Find(accounts.Account{Address: acc})
+	if err != nil {
+		return db.SignedTrx{}, err
+	}
+
+	ksAccountJson, err := fs.AppFS.ReadFile(ksAccount.URL.Path)
+	if err != nil {
+		return db.SignedTrx{}, err
+	}
+
+	key, err := keystore.DecryptKey(ksAccountJson, pwd)
+	if err != nil {
+		return db.SignedTrx{}, err
+	}
+
+	signedTrx, err := SignTrx(trx, key.PrivateKey)
+	if err != nil {
+		return db.SignedTrx{}, err
+	}
+
+	return signedTrx, nil
+}
+
+func SignTrx(tx db.Trx, privKey *ecdsa.PrivateKey) (db.SignedTrx, error) {
+	rawTx, err := tx.Encode()
+	if err != nil {
+		return db.SignedTrx{}, err
+	}
+
+	sig, err := Sign(rawTx, privKey)
+	if err != nil {
+		return db.SignedTrx{}, err
+	}
+
+	return db.NewSignedTrx(tx, sig), nil
+}
 
 func Sign(msg []byte, privKey *ecdsa.PrivateKey) (sig []byte, err error) {
-	msgHash := crypto.Keccak256(msg)
+	msgHash := sha256.Sum256(msg)
 
-	sig, err = crypto.Sign(msgHash, privKey)
+	sig, err = crypto.Sign(msgHash[:], privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +85,9 @@ func Sign(msg []byte, privKey *ecdsa.PrivateKey) (sig []byte, err error) {
 }
 
 func Verify(msg, sig []byte) (*ecdsa.PublicKey, error) {
-	msgHash := crypto.Keccak256(msg)
+	msgHash := sha256.Sum256(msg)
 
-	recoveredPubKey, err := crypto.SigToPub(msgHash, sig)
+	recoveredPubKey, err := crypto.SigToPub(msgHash[:], sig)
 	if err != nil {
 		return nil, fmt.Errorf("unable to verify message signature: %s", err.Error())
 	}

@@ -208,7 +208,15 @@ func applyBlock(b Block, s *State) error {
 	return nil
 }
 
-func applyTrx(trx Trx, s *State) error {
+func applyTrx(trx SignedTrx, s *State) error {
+	ok, err := trx.IsAuthentic()
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return fmt.Errorf("wrong transaction. Sender '%s' is forged", trx.From.String())
+	}
 	if len(trx.From) == 0 {
 		return NewInvalidTransaction("From")
 	}
@@ -229,7 +237,7 @@ func applyTrx(trx Trx, s *State) error {
 	return nil
 }
 
-func applyTRXs(trxs []Trx, s *State) error {
+func applyTRXs(trxs []SignedTrx, s *State) error {
 	sort.Slice(trxs, func(i, j int) bool {
 		return trxs[i].Time < trxs[j].Time
 	})

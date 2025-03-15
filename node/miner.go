@@ -17,10 +17,10 @@ type PendingBlock struct {
 	height uint64
 	time   uint64
 	miner  common.Address
-	trxs   []db.Trx
+	trxs   []db.SignedTrx
 }
 
-func NewPendingBlock(parent db.Hash, height uint64, miner common.Address, trxs []db.Trx) PendingBlock {
+func NewPendingBlock(parent db.Hash, height uint64, miner common.Address, trxs []db.SignedTrx) PendingBlock {
 	t := uint64(time.Now().UnixNano())
 	return PendingBlock{parent, height, t, miner, trxs}
 }

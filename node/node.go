@@ -44,10 +44,10 @@ type (
 
 		state           state
 		knownPeers      map[string]PeerNode
-		pendingTRXs     map[string]db.Trx
-		archivedTRXs    map[string]db.Trx
+		pendingTRXs     map[string]db.SignedTrx
+		archivedTRXs    map[string]db.SignedTrx
 		newSyncedBlocks chan db.Block
-		newPendingTRXs  chan db.Trx
+		newPendingTRXs  chan db.SignedTrx
 		isMining        bool
 	}
 	state interface {
@@ -78,10 +78,10 @@ func New(s state, ip string, port uint64, acc common.Address, bootstrap PeerNode
 		state: s,
 
 		knownPeers:      knownPeers,
-		pendingTRXs:     make(map[string]db.Trx),
-		archivedTRXs:    make(map[string]db.Trx),
+		pendingTRXs:     make(map[string]db.SignedTrx),
+		archivedTRXs:    make(map[string]db.SignedTrx),
 		newSyncedBlocks: make(chan db.Block),
-		newPendingTRXs:  make(chan db.Trx, 10000),
+		newPendingTRXs:  make(chan db.SignedTrx, 10000),
 		isMining:        false,
 	}
 }
@@ -149,9 +149,31 @@ func (n *Node) PostTrx(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trx := db.NewTrx(req.From, req.To, req.Value, req.Data)
+	from := db.NewAccount(req.From)
 
-	if err := n.AddPendingTrx(trx, n.info); err != nil {
+	if from.String() == common.HexToAddress("").String() {
+		writeErr(w, fmt.Errorf("%s is an invalid 'from' sender", from.String()))
+		return
+	}
+	if req.FromPwd == "" {
+		writeErr(w, fmt.Errorf("password to decrypt the %s account is required. 'from_pwd' is empty", from.String()))
+		return
+	}
+
+	trx := db.NewTrx(from, db.NewAccount(req.To), req.Value, req.Data)
+
+	signedTrx, err := wallet.SignTrxWithKeystoreAccount(trx, from, req.FromPwd, wallet.GetKeystoreDirPath(n.state.DataDir()))
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+
+	if err := n.AddPendingTrx(signedTrx, n.info); err != nil {
+		writeErr(w, err)
+		return
+	}
+
+	if err := n.AddPendingTrx(signedTrx, n.info); err != nil {
 		writeErr(w, err)
 		return
 	}
@@ -209,7 +231,7 @@ func (n *Node) AddPeer(w http.ResponseWriter, r *http.Request) {
 	writeRes(w, AddPeerRes{true, ""})
 }
 
-func (n *Node) AddPendingTrx(trx db.Trx, fromPeer PeerNode) error {
+func (n *Node) AddPendingTrx(trx db.SignedTrx, fromPeer PeerNode) error {
 	trxHash, err := trx.Hash()
 	if err != nil {
 		return err
@@ -328,8 +350,8 @@ func (n *Node) removeMinedPendingTRXs(block db.Block) {
 	}
 }
 
-func (n *Node) getPendingTRXsAsArray() []db.Trx {
-	trxs := make([]db.Trx, len(n.pendingTRXs))
+func (n *Node) getPendingTRXsAsArray() []db.SignedTrx {
+	trxs := make([]db.SignedTrx, len(n.pendingTRXs))
 
 	var i int
 	for _, trx := range n.pendingTRXs {

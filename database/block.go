@@ -19,7 +19,7 @@ type (
 	}
 	Block struct {
 		Header BlockHeader `json:"header"`
-		TRXs   []Trx       `json:"payload"`
+		TRXs   []SignedTrx `json:"payload"`
 	}
 	BlockHeader struct {
 		Parent Hash           `json:"parent"`
@@ -56,7 +56,7 @@ func (h Hash) IsValid() bool {
 		fmt.Sprintf("%x", h[3]) != "0"
 }
 
-func NewBlock(parent Hash, height uint64, nonce uint32, time uint64, miner common.Address, trxs []Trx) Block {
+func NewBlock(parent Hash, height uint64, nonce uint32, time uint64, miner common.Address, trxs []SignedTrx) Block {
 	return Block{BlockHeader{parent, height, nonce, time, miner}, trxs}
 }
 

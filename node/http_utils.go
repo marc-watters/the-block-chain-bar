@@ -21,10 +21,11 @@ type (
 		Error string `json:"error"`
 	}
 	TrxPostReq struct {
-		From  common.Address `json:"from"`
-		To    common.Address `json:"to"`
-		Value uint64         `json:"value"`
-		Data  string         `json:"data"`
+		From    string `json:"from"`
+		FromPwd string `json:"from_pwd"`
+		To      string `json:"to"`
+		Value   uint64 `json:"value"`
+		Data    string `json:"data"`
 	}
 	TrxPostRes struct {
 		Success bool `json:"success"`
@@ -33,7 +34,7 @@ type (
 		Hash        db.Hash             `json:"block_hash"`
 		Height      uint64              `json:"block_height"`
 		KnownPeers  map[string]PeerNode `json:"peers_known"`
-		PendingTRXs []db.Trx            `json:"pending_trxs"`
+		PendingTRXs []db.SignedTrx      `json:"pending_trxs"`
 	}
 	SyncRes struct {
 		Blocks []db.Block `json:"blocks"`

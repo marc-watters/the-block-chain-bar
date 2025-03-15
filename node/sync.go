@@ -55,7 +55,7 @@ func (n *Node) doSync() {
 			continue
 		}
 
-		if err := n.syncPendingTRXs(peer, status); err != nil {
+		if err := n.syncPendingTRXs(peer, status.PendingTRXs); err != nil {
 			fmt.Println("ERROR:", err)
 			continue
 		}
@@ -115,8 +115,8 @@ func (n *Node) syncKnownPeers(status StatusRes) error {
 	return nil
 }
 
-func (n *Node) syncPendingTRXs(p PeerNode, status StatusRes) error {
-	for _, trx := range status.PendingTRXs {
+func (n *Node) syncPendingTRXs(p PeerNode, trxs []db.SignedTrx) error {
+	for _, trx := range trxs {
 		if err := n.AddPendingTrx(trx, p); err != nil {
 			return err
 		}

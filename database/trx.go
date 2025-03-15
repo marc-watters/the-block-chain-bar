@@ -18,10 +18,18 @@ type (
 		Data  string         `json:"data"`
 		Time  uint64         `json:"time"`
 	}
+	SignedTrx struct {
+		Trx
+		Sig []byte `json:"signature"`
+	}
 )
 
 func NewAccount(value string) common.Address {
 	return common.HexToAddress(value)
+}
+
+func NewSignedTrx(trx Trx, sig []byte) SignedTrx {
+	return SignedTrx{trx, sig}
 }
 
 func NewTrx(from common.Address, to common.Address, value uint64, data string) Trx {
@@ -33,9 +41,36 @@ func (t Trx) IsReward() bool {
 }
 
 func (t Trx) Hash() (Hash, error) {
-	trxJSON, err := json.Marshal(t)
+	trxJSON, err := t.Encode()
+	if err != nil {
+		return Hash{}, err
+	}
+
+	return sha256.Sum256(trxJSON), nil
+}
+
+func (st SignedTrx) Hash() (Hash, error) {
+	trxJSON, err := st.Encode()
 	if err != nil {
 		return Hash{}, nil
 	}
 	return sha256.Sum256(trxJSON), nil
+}
+
+func (st SignedTrx) IsAuthentic() (bool, error) {
+	trxHash, err := st.Trx.Hash()
+	if err != nil {
+		return false, err
+	}
+
+	recoveredPubKey, err := crypto.SigToPub(trxHash[:], st.Sig)
+	if err != nil {
+		return false, err
+	}
+
+	recoveredPubKeyBytes := elliptic.Marshal(crypto.S256(), recoveredPubKey.X, recoveredPubKey.Y)
+	recoveredPubKeyBytesHash := crypto.Keccak256(recoveredPubKeyBytes[1:])
+	recoveredAccount := common.BytesToAddress(recoveredPubKeyBytesHash[12:])
+
+	return recoveredAccount.Hex() == st.From.Hex(), nil
 }

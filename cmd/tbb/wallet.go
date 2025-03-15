@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/cmd/utils"
 	"github.com/ethereum/go-ethereum/console/prompt"
 	"github.com/spf13/cobra"
@@ -35,8 +34,7 @@ func walletNewAccountCmd() *cobra.Command {
 			password := getPassPhrase("Please enter a password to encrypt the new wallet: ", true)
 			dataDir := getDataDirFromCmd(cmd)
 
-			ks := keystore.NewKeyStore(wallet.GetKeystoreDirPath(dataDir), keystore.StandardScryptN, keystore.StandardScryptP)
-			acc, err := wallet.NewKeyStoreAccount(dataDir, password)
+			acc, err := wallet.NewKeystoreAccount(dataDir, password)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

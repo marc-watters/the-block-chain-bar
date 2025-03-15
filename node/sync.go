@@ -31,6 +31,10 @@ func (n *Node) doSync() {
 			continue
 		}
 
+		if peer.IP == "" {
+			continue
+		}
+
 		fmt.Println("Querying new peers and blocks from:", peer.Address())
 		status, err := queryPeerStatus(peer)
 		if err != nil {

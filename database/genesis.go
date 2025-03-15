@@ -8,20 +8,20 @@ import (
 	"github.com/marc-watters/the-block-chain-bar/v2/fs"
 )
 
-type genesis struct {
+type Genesis struct {
 	Balances map[common.Address]uint64 `json:"balances"`
 }
 
-func loadGenesis(path string) (genesis, error) {
+func loadGenesis(path string) (Genesis, error) {
 	content, err := fs.AppFS.ReadFile(path)
 	if err != nil {
-		return genesis{}, err
+		return Genesis{}, err
 	}
 
-	var loadedGenesis genesis
+	var loadedGenesis Genesis
 	err = json.Unmarshal(content, &loadedGenesis)
 	if err != nil {
-		return genesis{}, err
+		return Genesis{}, err
 	}
 
 	return loadedGenesis, nil

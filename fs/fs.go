@@ -22,7 +22,7 @@ func init() {
 	AppFS = &afero.Afero{Fs: afero.NewOsFs()}
 }
 
-var genesisJSON = `
+var GenesisJSON = `
 {
   "genesis_time": "2019-03-18T00:00:00.000000000Z",
   "chain_id": "the-blockchain-bar-ledger",
@@ -31,7 +31,7 @@ var genesisJSON = `
   }
 }`
 
-func InitDataDirIfNotExists(dataDir string) error {
+func InitDataDirIfNotExists(dataDir string, genesis []byte) error {
 	if FileExist(GetGenesisJSONFilePath(dataDir)) {
 		return nil
 	}
@@ -40,7 +40,7 @@ func InitDataDirIfNotExists(dataDir string) error {
 		return err
 	}
 
-	if err := WriteGenesisToDisk(GetGenesisJSONFilePath(dataDir)); err != nil {
+	if err := WriteGenesisToDisk(GetGenesisJSONFilePath(dataDir), genesis); err != nil {
 		return err
 	}
 
@@ -86,8 +86,8 @@ func WriteEmptyBlocksDBToDisk(path string) error {
 	return AppFS.WriteFile(path, []byte(``), os.ModePerm)
 }
 
-func WriteGenesisToDisk(path string) error {
-	return AppFS.WriteFile(path, []byte(genesisJSON), 0o644)
+func WriteGenesisToDisk(path string, genesis []byte) error {
+	return AppFS.WriteFile(path, genesis, 0o644)
 }
 
 func RemoveDir(path string) error {

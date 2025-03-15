@@ -28,7 +28,7 @@ type State struct {
 func NewStateFromDisk(dataDir string) (*State, error) {
 	dataDir = fs.ExpandPath(dataDir)
 
-	err := fs.InitDataDirIfNotExists(dataDir)
+	err := fs.InitDataDirIfNotExists(dataDir, []byte(fs.GenesisJSON))
 	if err != nil {
 		return nil, err
 	}
